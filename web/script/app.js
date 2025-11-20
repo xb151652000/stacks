@@ -12,11 +12,11 @@ function apiHeaders() {
 function apiFetch(url, options = {}) {
   return fetch(url, {
     ...options,
-    credentials: 'same-origin',  // Always include session cookie
+    credentials: "same-origin", // Always include session cookie
     headers: {
       ...apiHeaders(),
-      ...(options.headers || {})
-    }
+      ...(options.headers || {}),
+    },
   });
 }
 
@@ -67,8 +67,8 @@ function loadSettings() {
     .then((config) => {
       // Login credentials
       document.getElementById("setting-username").value = config.login?.username || "";
-      document.getElementById("setting-new-password").value = "";  // Always clear password field
-      
+      document.getElementById("setting-new-password").value = ""; // Always clear password field
+
       // Downloads
       document.getElementById("setting-delay").value = config.downloads?.delay || 2;
       document.getElementById("setting-retry-count").value = config.downloads?.retry_count || 3;
@@ -77,6 +77,11 @@ function loadSettings() {
       // Fast Download
       document.getElementById("setting-fast-enabled").checked = !!config.fast_download?.enabled;
       document.getElementById("setting-fast-key").value = config.fast_download?.key || "";
+
+      // FlareSolverr
+      document.getElementById("setting-flaresolverr-enabled").checked = !!config.flaresolverr?.enabled;
+      document.getElementById("setting-flaresolverr-url").value = config.flaresolverr?.url || "http://localhost:8191";
+      document.getElementById("setting-flaresolverr-timeout").value = config.flaresolverr?.timeout || 60;
 
       // Queue
       document.getElementById("setting-max-history").value = config.queue?.max_history || 100;
@@ -112,7 +117,7 @@ function regenerateApiKey() {
 
 function saveSettings() {
   const newPassword = document.getElementById("setting-new-password").value;
-  
+
   const config = {
     downloads: {
       delay: parseInt(document.getElementById("setting-delay").value),
@@ -123,6 +128,11 @@ function saveSettings() {
       enabled: document.getElementById("setting-fast-enabled").checked,
       key: document.getElementById("setting-fast-key").value || null,
     },
+    flaresolverr: {
+      enabled: document.getElementById("setting-flaresolverr-enabled").checked,
+      url: document.getElementById("setting-flaresolverr-url").value || "http://localhost:8191",
+      timeout: parseInt(document.getElementById("setting-flaresolverr-timeout").value) || 60,
+    },
     queue: {
       max_history: parseInt(document.getElementById("setting-max-history").value),
     },
@@ -131,9 +141,9 @@ function saveSettings() {
     },
     login: {
       username: document.getElementById("setting-username").value,
-    }
+    },
   };
-  
+
   // Only include password if it's been changed
   if (newPassword) {
     config.login.new_password = newPassword;
@@ -204,7 +214,40 @@ function testFastKey() {
       resultDiv.textContent = `✗ Connection error: ${err.message}`;
     });
 }
+function testFlaresolverr() {
+  const url = document.getElementById("setting-flaresolverr-url").value;
+  const timeout = parseInt(document.getElementById("setting-flaresolverr-timeout").value) || 10;
+  const resultDiv = document.getElementById("flaresolverr-test-result");
 
+  if (!url) {
+    resultDiv.className = "test-result error";
+    resultDiv.textContent = "Please enter a FlareSolverr URL first";
+    return;
+  }
+
+  resultDiv.className = "test-result";
+  resultDiv.textContent = "Testing connection...";
+  resultDiv.style.display = "block";
+
+  apiFetch("/api/config/test_flaresolverr", {
+    method: "POST",
+    body: JSON.stringify({ url: url, timeout: timeout }),
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        resultDiv.className = "test-result success";
+        resultDiv.textContent = `✓ ${data.message}`;
+      } else {
+        resultDiv.className = "test-result error";
+        resultDiv.textContent = `✗ ${data.error}`;
+      }
+    })
+    .catch((err) => {
+      resultDiv.className = "test-result error";
+      resultDiv.textContent = `✗ Connection error: ${err.message}`;
+    });
+}
 function updateStatus() {
   apiFetch("/api/status")
     .then((r) => {
@@ -435,10 +478,10 @@ function formatBytes(bytes) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const clipboard = new ClipboardJS('[data-clipboard-action="copy"]');
-    clipboard.on('success', function(e) {
-        e.clearSelection();
-    });
+  const clipboard = new ClipboardJS('[data-clipboard-action="copy"]');
+  clipboard.on("success", function (e) {
+    e.clearSelection();
+  });
 });
 
 // Initialize and start

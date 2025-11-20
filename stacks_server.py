@@ -418,18 +418,28 @@ class DownloadWorker:
             'domain_index': 0
         }
         
+        # Get FlareSolverr config
+        flaresolverr_enabled = self.config.get('flaresolverr', 'enabled', default=False)
+        flaresolverr_url = self.config.get('flaresolverr', 'url', default='http://localhost:8191')
+        flaresolverr_timeout = self.config.get('flaresolverr', 'timeout', default=60)
+        
+        # Convert timeout to milliseconds (downloader expects milliseconds)
+        flaresolverr_timeout_ms = flaresolverr_timeout * 1000
+        
+        # Pass None if FlareSolverr is disabled, otherwise pass the URL
         self.downloader = stacks_downloader.AnnaDownloader(
             output_dir=DOWNLOAD_PATH,
             incomplete_dir=INCOMPLETE_PATH,
             progress_callback=self.progress_callback,
-            fast_download_config=fast_config
+            fast_download_config=fast_config,
+            flaresolverr_url=flaresolverr_url if flaresolverr_enabled else None,
+            flaresolverr_timeout=flaresolverr_timeout_ms
         )
         
         # Test fast download key if enabled and key is present
         if fast_config['enabled'] and fast_config['key']:
             self.logger.info("Testing fast download key...")
             try:
-                # Use refresh method with force=True to bypass cooldown on startup
                 success = self.downloader.refresh_fast_download_info(force=True)
                 
                 if success:
@@ -439,6 +449,20 @@ class DownloadWorker:
                     self.logger.warning("Fast download key test failed")
             except Exception as e:
                 self.logger.error(f"Failed to test fast download key: {e}")
+        
+        # Test FlareSolverr if enabled
+        if flaresolverr_enabled:
+            self.logger.info(f"Testing FlareSolverr connection at {flaresolverr_url}...")
+            try:
+                import requests
+                response = requests.get(flaresolverr_url, timeout=5)
+                if response.status_code == 200:
+                    self.logger.info("✓ FlareSolverr connection successful")
+                else:
+                    self.logger.warning(f"⚠ FlareSolverr returned status {response.status_code}")
+            except Exception as e:
+                self.logger.error(f"✗ Failed to connect to FlareSolverr: {e}")
+                self.logger.warning("Downloads will fall back to external mirrors only")
         
         self.logger.info("Downloader recreated with updated config")
     
@@ -787,7 +811,23 @@ def api_config_update():
                 if key_value == '' or key_value is None:
                     key_value = None
                 config.set('fast_download', 'key', value=key_value)
-        
+        if 'flaresolverr' in data:
+            if 'enabled' in data['flaresolverr']:
+                config.set('flaresolverr', 'enabled', value=bool(data['flaresolverr']['enabled']))
+            if 'url' in data['flaresolverr']:
+                url_value = data['flaresolverr']['url']
+                # Allow null/empty to set default
+                if not url_value:
+                    url_value = 'http://localhost:8191'
+                config.set('flaresolverr', 'url', value=url_value)
+            if 'timeout' in data['flaresolverr']:
+                timeout_value = int(data['flaresolverr']['timeout'])
+                # Clamp between 10-300 seconds
+                if timeout_value < 10:
+                    timeout_value = 10
+                if timeout_value > 300:
+                    timeout_value = 300
+                config.set('flaresolverr', 'timeout', value=timeout_value)
         if 'queue' in data:
             if 'max_history' in data['queue']:
                 config.set('queue', 'max_history', value=int(data['queue']['max_history']))
@@ -919,6 +959,53 @@ def api_config_test_key():
             'error': f'Connection failed: {str(e)}'
         }), 500
 
+@app.route('/api/config/test_flaresolverr', methods=['POST'])
+@require_auth
+def api_config_test_flaresolverr():
+    """Test FlareSolverr connection"""
+    data = request.json
+    test_url = data.get('url', 'http://localhost:8191')
+    timeout = data.get('timeout', 10)
+    
+    if not test_url:
+        return jsonify({
+            'success': False,
+            'error': 'No URL provided'
+        }), 400
+    
+    try:
+        import requests
+        
+        # Try to connect to FlareSolverr's health endpoint
+        response = requests.get(test_url, timeout=timeout)
+        
+        if response.status_code == 200:
+            return jsonify({
+                'success': True,
+                'message': 'FlareSolverr is online and responding',
+                'status_code': response.status_code
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'FlareSolverr returned status {response.status_code}'
+            }), 400
+            
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'success': False,
+            'error': f'Connection timeout after {timeout} seconds'
+        }), 408
+    except requests.exceptions.ConnectionError:
+        return jsonify({
+            'success': False,
+            'error': 'Could not connect to FlareSolverr. Is it running?'
+        }), 503
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Connection failed: {str(e)}'
+        }), 500
 
 @app.route('/api/key/regenerate', methods=['POST'])
 @require_session_only

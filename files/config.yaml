@@ -21,6 +21,11 @@ fast_download:
   enabled: false
   key: null
 
+flaresolverr:
+  enabled: false
+  url: "http://localhost:8191"
+  timeout: 60
+
 queue:
   max_history: 100
 
