@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 from stacks.constants import CACHE_PATH
 
 # Cookie cache path
-COOKIE_CACHE_PATH = Path(CACHE_PATH)
+COOKIE_CACHE_PATH = Path(CACHE_PATH) / "cookie.json"
 
 
 def extract_md5(input_string):
