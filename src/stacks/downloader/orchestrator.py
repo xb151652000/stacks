@@ -28,31 +28,19 @@ def orchestrate_download(d, input_string, prefer_mirror=None, resume_attempts=3,
                 d.logger.warning("Fast download failed, falling back to mirrors")
         else:
             d.logger.info(f"Fast download not available: {result}")
-    
-    # Try aria2 multi-source if enabled
-    if d.enable_aria2 and len(links) > 1:
-        d.logger.info("Collecting all download URLs for multi-source...")
-        all_urls = d.get_all_download_urls(md5, solve_ddos=True, max_urls=10)
         
-        if len(all_urls) >= 2:
-            filepath = d.download_with_aria2(all_urls, title=title, resume_attempts=resume_attempts)
-            if filepath:
-                d.logger.info("aria2 multi-source download successful")
-                return True, False
-            else:
-                d.logger.warning("aria2 failed, falling back to single-source")
-    
-    # Single-source fallback
+
     if not links:
         d.logger.error("No download links found")
         return False, False
     
     d.logger.info(f"Found {len(links)} mirror(s)")
+
     
     # Preferred mirror
     if prefer_mirror:
-        preferred = [l for l in links if prefer_mirror.lower() in l['domain'].lower()]
-        others = [l for l in links if prefer_mirror.lower() not in l['domain'].lower()]
+        preferred = [link for link in links if prefer_mirror.lower() in link['domain'].lower()]
+        others = [link for link in links if prefer_mirror.lower() not in link['domain'].lower()]
         links = preferred + others
     else:
         # Shuffle to spread load across mirrors (unless user has preference)

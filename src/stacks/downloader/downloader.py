@@ -1,10 +1,8 @@
 import logging
 import requests
-import shutil
 from pathlib import Path
 from stacks.utils.md5utils import extract_md5
 from stacks.downloader.cookies import _load_cached_cookies, _save_cookies_to_cache, _prewarm_cookies
-from stacks.downloader.aria2 import download_with_aria2
 from stacks.downloader.direct import download_direct
 from stacks.downloader.fast_download import try_fast_download, get_fast_download_info, refresh_fast_download_info
 from stacks.downloader.flaresolver import solve_with_flaresolverr
@@ -15,8 +13,7 @@ from stacks.downloader.utils import get_unique_filename
 
 class AnnaDownloader:
     def __init__(self, output_dir="./downloads", incomplete_dir=None, progress_callback=None, 
-                 fast_download_config=None, flaresolverr_url=None, flaresolverr_timeout=60000,
-                 enable_aria2=True, aria2_min_size_mb=2, aria2_chunk_size='1M'):
+                 fast_download_config=None, flaresolverr_url=None, flaresolverr_timeout=60000):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -56,19 +53,7 @@ class AnnaDownloader:
         # FlareSolverr configuration
         self.flaresolverr_url = flaresolverr_url
         self.flaresolverr_timeout = flaresolverr_timeout
-        
-        # aria2 configuration
-        self.enable_aria2 = enable_aria2
-        self.aria2_min_size_mb = aria2_min_size_mb
-        self.aria2_chunk_size = aria2_chunk_size
-        self.has_aria2 = shutil.which('aria2c') is not None
-        
-        if self.enable_aria2 and self.has_aria2:
-            self.logger.info(f"aria2 enabled: multi-source downloads for files >{aria2_min_size_mb}MB")
-        elif self.enable_aria2 and not self.has_aria2:
-            self.logger.warning("aria2 not found, multi-source downloads disabled")
-            self.enable_aria2 = False
-        
+                
         if flaresolverr_url:
             self.logger.info(f"FlareSolverr enabled: {flaresolverr_url}")
             self.logger.info("Using ALL download sources (Anna's Archive + external mirrors)")
@@ -77,11 +62,6 @@ class AnnaDownloader:
         else:
             self.logger.warning("FlareSolverr not configured - slow_download servers will be SKIPPED")
             self.logger.info("Using external mirrors only (Libgen, library.lol, etc.)")
-
-    # Aria2
-    def download_with_aria2(self, download_urls, title=None, resume_attempts=3):
-        return download_with_aria2(self, download_urls, title, resume_attempts)
-
     
     # Cookies
     def load_cached_cookies(self):

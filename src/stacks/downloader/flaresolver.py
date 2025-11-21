@@ -5,7 +5,7 @@ def solve_with_flaresolverr(d, url):
     if not d.flaresolverr_url:
         return False, {}, None
     
-    d.logger.info(f"Using FlareSolverr to solve protection challenge...")
+    d.logger.info("Using FlareSolverr to solve protection challenge...")
     
     try:
         payload = {
