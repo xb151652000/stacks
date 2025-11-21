@@ -3,15 +3,13 @@ import time
 from flask import (
     jsonify,
     request,
-    session,
     current_app,
 )
-from stacks.constants import FAST_DOWNLOAD_API_URL
+from stacks.constants import FAST_DOWNLOAD_API_URL, KNOWN_MD5
 from . import api_bp
 from stacks.utils.logutils import setup_logging
 from stacks.security.auth import (
     require_auth,
-    hash_password,
 )
 
 logger = logging.getLogger("api")
@@ -81,12 +79,11 @@ def api_config_test_key():
         import requests
         
         # Use a known valid MD5 for testing
-        test_md5 = 'd6e1dc51a50726f00ec438af21952a45'
-        
+                
         response = requests.get(
             FAST_DOWNLOAD_API_URL,
             params={
-                'md5': test_md5,
+                'md5': KNOWN_MD5,
                 'key': test_key
             },
             timeout=10
@@ -144,102 +141,44 @@ def api_config_test_key():
 @api_bp.route('/api/config', methods=['POST'])
 @require_auth
 def api_config_update():
-    """Update configuration"""
+    """
+    Update configuration using schema validation.
+    """
     data = request.json
     logger = logging.getLogger('api')
     config = current_app.stacks_config
 
     try:
-        # Update each provided config value
-        if 'downloads' in data:
-            if 'delay' in data['downloads']:
-                config.set('downloads', 'delay', value=int(data['downloads']['delay']))
-            if 'retry_count' in data['downloads']:
-                config.set('downloads', 'retry_count', value=int(data['downloads']['retry_count']))
-            if 'resume_attempts' in data['downloads']:
-                config.set('downloads', 'resume_attempts', value=int(data['downloads']['resume_attempts']))
-        
-        if 'fast_download' in data:
-            if 'enabled' in data['fast_download']:
-                config.set('fast_download', 'enabled', value=bool(data['fast_download']['enabled']))
-            if 'key' in data['fast_download']:
-                key_value = data['fast_download']['key']
-                # Allow null/empty to clear the key
-                if key_value == '' or key_value is None:
-                    key_value = None
-                config.set('fast_download', 'key', value=key_value)
-        if 'flaresolverr' in data:
-            if 'enabled' in data['flaresolverr']:
-                config.set('flaresolverr', 'enabled', value=bool(data['flaresolverr']['enabled']))
-            if 'url' in data['flaresolverr']:
-                url_value = data['flaresolverr']['url']
-                # Allow null/empty to set default
-                if not url_value:
-                    url_value = 'http://localhost:8191'
-                config.set('flaresolverr', 'url', value=url_value)
-            if 'timeout' in data['flaresolverr']:
-                timeout_value = int(data['flaresolverr']['timeout'])
-                # Clamp between 10-300 seconds
-                if timeout_value < 10:
-                    timeout_value = 10
-                if timeout_value > 300:
-                    timeout_value = 300
-                config.set('flaresolverr', 'timeout', value=timeout_value)
-        if 'queue' in data:
-            if 'max_history' in data['queue']:
-                config.set('queue', 'max_history', value=int(data['queue']['max_history']))
-        
-        if 'logging' in data:
-            if 'level' in data['logging']:
-                new_level = data['logging']['level'].upper()
-                if new_level in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
-                    config.set('logging', 'level', value=new_level)
-                    # Update logging level immediately
-                    setup_logging(config)
-        
-        # Handle login credentials update (only if session authenticated)
-        if 'login' in data and session.get('logged_in'):
-            if 'username' in data['login']:
-                new_username = data['login']['username']
-                if new_username:
-                    config.set('login', 'username', value=new_username)
-            
-            if 'new_password' in data['login']:
-                new_password = data['login']['new_password']
-                if new_password:
-                    hashed = hash_password(new_password)
-                    config.set('login', 'password', value=hashed)
-                    logger.info("Password updated via settings")
-        
-        # Save config to disk
+        for section, values in data.items():
+            if isinstance(values, dict):
+                for key, new_value in values.items():
+                    config.set(section, key, value=new_value)
+
+        config.data = config.validate(config.data, config.schema)
+        config.ensure_login_credentials()
         config.save()
-        
-        # Update worker with new config (recreate downloader)
+
         worker = current_app.stacks_worker
         worker.update_config()
-        
-        logger.info("Configuration updated successfully")
-        
+        setup_logging(config)
+
         import copy
-        config_data = copy.deepcopy(config.get_all())
-        # Mask sensitive data
-        if 'api' in config_data and 'key' in config_data['api']:
-            config_data['api']['key'] = '***MASKED***'
-        if 'login' in config_data and 'password' in config_data['login']:
-            config_data['login']['password'] = '***MASKED***'
-        
+        cfg = copy.deepcopy(config.get_all())
+        if "api" in cfg and "key" in cfg["api"]:
+            cfg["api"]["key"] = "***MASKED***"
+        if "login" in cfg and "password" in cfg["login"]:
+            cfg["login"]["password"] = "***MASKED***"
+
         return jsonify({
-            'success': True,
-            'message': 'Configuration updated',
-            'config': config_data
+            "success": True,
+            "message": "Configuration updated",
+            "config": cfg
         })
-        
+
     except Exception as e:
         logger.error(f"Failed to update config: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
+        return jsonify({"success": False, "error": str(e)}), 400
+
     
 @api_bp.route('/api/config', methods=['GET'])
 @require_auth
