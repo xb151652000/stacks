@@ -32,7 +32,7 @@ downloads:
   delay:
     types: [INTEGER]
     default: 2
-    min: 1
+    min: 0
     max: 300
   retry_count:
     types: [INTEGER]
@@ -65,7 +65,7 @@ flaresolverr:
   timeout:
     types: [INTEGER]
     default: 60
-    min: 1
+    min: 10
     max: 600
 
 queue:
