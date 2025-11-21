@@ -5,13 +5,15 @@
 ### Features
 
 - Refectored large parts of the downloader:
-  - Added aria2 support for multi downloading
   - Added ability to use Flaresolverr
   - Updated the download logic to better catch download links
+  - Downloads are randomized to spread load across multiple servers
+- Added the ability to disable authentification
 
 ### Architecture
 
 - Broke out everything into modules
+- Config file now works through a self-regenerating schema that validates the config on load and fixes errors on the fly
 
 ## [1.0.2] - 2025-11-18
 
