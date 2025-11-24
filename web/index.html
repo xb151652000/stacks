@@ -19,6 +19,7 @@
         <div>
           <button class="tab-button active" data-tab="downloads">Downloads</button>
           <button class="tab-button" data-tab="settings">Settings</button>
+          <button class="tab-button" data-tab="console">Console</button>
         </div>
 
         <!-- Current Status -->
@@ -219,6 +220,12 @@
           </div>
         </section>
       </div>
+      <!-- Console -->
+      <div id="console-tab" class="tab-content">
+        <section class="card">
+        <div id="console">ABC123</div>
+        </section>
+      </div>
 
       <footer>
         <p><a href="./tamper/stacks_extension.user.js" target="_blank" data-icon="tampermonkey">Install Tampermonkey Script</a> • <a href="https://github.com/zelestcarlyone/stacks-docker" target="_blank" data-icon="github">Visit GitHub</a></p>
@@ -277,6 +284,16 @@
         </div>
         <button class="toast-close">×</button>
         <div class="toast-progress"></div>
+      </div>
+    </template>
+
+    <!-- Log-line template -->
+    <template id="log-line-template">
+      <div class="log-line">
+        <span class="log-date">${date}</span>
+        <span class="log-class">${level}</span>
+        <span class="log-logger">${logger}</span>
+        <span class="log-message">${message}</span>
       </div>
     </template>
 

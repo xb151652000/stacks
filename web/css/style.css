@@ -132,7 +132,73 @@ h2 {
   gap: 3px;
 }
 
-@media screen and (min-width: 700px) {
+#console {
+  width: 100%;
+  min-height: 300px;
+  max-height: 500px;
+  font-family: monospace;
+  background: var(--bg2);
+  color: var(--foreground);
+  padding: 10px;
+  overflow-y: scroll;
+  font-size: 13px;
+  line-height: 1.4em;
+}
+
+.log-line span {
+  display: inline;
+}
+
+.log-line:hover {
+  background: var(--current-line);
+}
+
+.log-line .info {
+  color: var(--cyan);
+}
+
+.log-line .warning {
+  color: var(--orange);
+}
+
+.log-line .error {
+  color: var(--red);
+}
+
+.log-line .debug {
+  color: var(--yellow);
+}
+
+.log-line .log-date {
+  color: var(--purple);
+}
+
+.log-line .log-logger {
+  color: var(--comment);
+}
+
+#console span {
+  display: inline;
+  width: 100%;
+}
+
+#console::-webkit-scrollbar {
+  width: 10px;
+}
+
+#console::-webkit-scrollbar-track {
+  background: var(--current-line);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+#console::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--comment);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--bg);
+}
+
+@media screen and (min-width: 1000px) {
   .stats {
     display: grid;
     grid-auto-flow: column;
@@ -145,7 +211,7 @@ h2 {
     border-left: 2px solid var(--purple);
     box-shadow: -10px 0 10px var(--bg2);
     padding: 5px;
-    width: 150px;
+    width: 120px;
     box-shadow: -10px 0 10px var(--bg2);
   }
 }
