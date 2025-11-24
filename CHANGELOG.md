@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.3]
+## [1.1.0]
 
 ### Features
 
@@ -10,6 +10,8 @@
   - Downloads are randomized to spread load across multiple servers
 - Added the ability to disable authentification
 - Removed alerts and replaced them with a new toast system
+- Made shutdowns more graceful
+- Log Console added to front-end
 
 ### Minor changes
 
