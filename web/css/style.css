@@ -1,3 +1,7 @@
+/* ============================================================================
+   THEME & VARIABLES
+   ============================================================================ */
+
 /* Dracula Theme Colors */
 :root {
   --bg: #282a36;
@@ -13,6 +17,11 @@
   --red: #ff5555;
   --yellow: #f1fa8c;
 }
+
+
+/* ============================================================================
+   GLOBAL STYLES
+   ============================================================================ */
 
 * {
   box-sizing: border-box;
@@ -32,6 +41,201 @@ body {
   background-attachment: fixed;
   overflow-y: scroll;
 }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+
+h1 {
+  color: var(--purple);
+  font-size: 2.75em;
+  margin-bottom: 5px;
+}
+
+h2 {
+  color: var(--cyan);
+  font-size: 1.3em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subtitle {
+  color: var(--comment);
+  font-size: 0.82em;
+}
+
+.comment {
+  margin-top: 3px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--comment);
+}
+
+
+/* ============================================================================
+   HEADER & NAVIGATION
+   ============================================================================ */
+
+header {
+  text-align: center;
+}
+
+header img {
+  max-width: 500px;
+}
+
+.version {
+  position: absolute;
+  display: block;
+  top: -1.5em;
+  right: 0px;
+  font-size: 0.8em;
+  color: var(--comment);
+  opacity: 0;
+  transition: opacity 1s;
+}
+
+.version.visible {
+  opacity: 1;
+}
+
+
+/* ============================================================================
+   TABS
+   ============================================================================ */
+
+.tabs {
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--comment);
+  border-top: 2px solid var(--comment);
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  color: var(--foreground);
+  padding: 12px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  color: var(--cyan);
+  background: rgba(139, 233, 253, 0.1);
+}
+
+.tab-button.active {
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+
+/* ============================================================================
+   STATISTICS CARDS
+   ============================================================================ */
+
+.stats {
+  margin-left: auto;
+  overflow: hidden;
+  padding-left: 20px;
+  text-align: center;
+
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 3px;
+}
+
+.stat-value {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: var(--green);
+}
+
+.stat-value.error {
+  color: var(--red);
+}
+
+.stat-label {
+  color: var(--purple);
+  font-size: 0.8em;
+  display: absolute;
+  bottom: 0px;
+  right: 0px;
+}
+
+@media screen and (min-width: 1000px) {
+  .stats {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    gap: 0px;
+  }
+  .stat-card {
+    border-radius: 25px 0px 0px 20px;
+    background: linear-gradient(90deg, var(--current-line), var(--bg));
+    border-left: 2px solid var(--purple);
+    box-shadow: -10px 0 10px var(--bg2);
+    padding: 5px;
+    width: 120px;
+    box-shadow: -10px 0 10px var(--bg2);
+  }
+}
+
+
+/* ============================================================================
+   CARDS & CONTAINERS
+   ============================================================================ */
+
+.card-holder {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: var(--current-line);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  border: 5px solid var(--comment);
+  min-width: 300px;
+}
+
+.card-header {
+  padding: 10px;
+  border-bottom: 2px solid var(--comment);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+
+/* ============================================================================
+   ADD DOWNLOAD SECTION
+   ============================================================================ */
 
 .add-item .card.input-row {
   display: flex;
@@ -62,251 +266,10 @@ body {
   white-space: nowrap;
 }
 
-.comment {
-  margin-top: 3px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: var(--comment);
-}
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-header {
-  text-align: center;
-}
-
-header img {
-  max-width: 500px;
-}
-
-h1 {
-  color: var(--purple);
-  font-size: 2.75em;
-  margin-bottom: 5px;
-}
-
-.subtitle {
-  color: var(--comment);
-  font-size: 0.82em;
-}
-
-h2 {
-  color: var(--cyan);
-  font-size: 1.3em;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-[data-icon]:before {
-  content: "";
-  display: inline-block;
-  margin: 0 0.1em;
-}
-
-[data-icon][data-icon="tampermonkey"]:before {
-  background: currentColor;
-  mask: url("../images/tampermonkey.svg") no-repeat center;
-  -webkit-mask: url("../images/tampermonkey.svg") no-repeat center;
-  mask-size: contain;
-  -webkit-mask-size: contain;
-  width: 0.9em;
-  height: 0.9em;
-  vertical-align: -0.125em;
-}
-
-[data-icon][data-icon="github"]:before {
-  background: currentColor;
-  mask: url("../images/github.svg") no-repeat center;
-  -webkit-mask: url("../images/github.svg") no-repeat center;
-  mask-size: contain;
-  -webkit-mask-size: contain;
-  width: 0.9em;
-  height: 0.9em;
-  vertical-align: -0.125em;
-}
-
-.icon {
-  width: 0.8em;
-  margin-left: 0.2em;
-  margin-right: 0.2em;
-}
-
-.version {
-  position: absolute;
-  display: block;
-  top: -1.5em;
-  right: 0px;
-  font-size: 0.8em;
-  color: var(--comment);
-  opacity: 0;
-  transition: opacity 1s;
-}
-
-.version.visible {
-  opacity: 1;
-}
-
-.stats {
-  margin-left: auto;
-  overflow: hidden;
-  padding-left: 20px;
-  text-align: center;
-
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 3px;
-}
-
-#console {
-  width: 100%;
-  min-height: 300px;
-  max-height: 500px;
-  font-family: monospace;
-  background: var(--bg2);
-  color: var(--foreground);
-  padding: 10px;
-  overflow-y: scroll;
-  font-size: 13px;
-  line-height: 1.4em;
-}
-
-.log-line span {
-  display: inline;
-}
-
-.log-line:hover {
-  background: var(--current-line);
-}
-
-.log-line .info {
-  color: var(--cyan);
-}
-
-.log-line .warning {
-  color: var(--orange);
-}
-
-.log-line .error {
-  color: var(--red);
-}
-
-.log-line .debug {
-  color: var(--yellow);
-}
-
-.log-line .log-date {
-  color: var(--purple);
-}
-
-.log-line .log-logger {
-  color: var(--comment);
-}
-
-#console span {
-  display: inline;
-  width: 100%;
-}
-
-#console::-webkit-scrollbar {
-  width: 10px;
-}
-
-#console::-webkit-scrollbar-track {
-  background: var(--current-line);
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-}
-
-#console::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: var(--comment);
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--bg);
-}
-
-@media screen and (min-width: 1000px) {
-  .stats {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    gap: 0px;
-  }
-  .stat-card {
-    border-radius: 25px 0px 0px 20px;
-    background: linear-gradient(90deg, var(--current-line), var(--bg));
-    border-left: 2px solid var(--purple);
-    box-shadow: -10px 0 10px var(--bg2);
-    padding: 5px;
-    width: 120px;
-    box-shadow: -10px 0 10px var(--bg2);
-  }
-}
-
-.card-holder {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.stat-value {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: var(--green);
-}
-
-.stat-value.error {
-  color: var(--red);
-}
-
-.stat-label {
-  color: var(--purple);
-  font-size: 0.8em;
-  display: absolute;
-  bottom: 0px;
-  right: 0px;
-}
-
-.card {
-  background: var(--current-line);
-  border-radius: 5px;
-  margin-bottom: 10px;
-  border: 5px solid var(--comment);
-  min-width: 300px;
-}
-
-.card-header {
-  padding: 10px;
-  border-bottom: 2px solid var(--comment);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.list {
-  min-height: 100px;
-  max-height: 800px;
-  overflow-y: auto;
-}
-
-.list::-webkit-scrollbar {
-  width: 10px;
-}
-
-.list::-webkit-scrollbar-track {
-  background: var(--current-line);
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-}
-
-.list::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: var(--comment);
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--bg);
-}
+/* ============================================================================
+   CURRENT DOWNLOAD
+   ============================================================================ */
 
 .current-download {
   background: var(--current-line);
@@ -338,6 +301,11 @@ h2 {
   opacity: 0.9;
   font-size: 0.9em;
 }
+
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
 
 .progress-container {
   width: 100%;
@@ -375,6 +343,33 @@ h2 {
   font-size: 0.9em;
   opacity: 0.9;
   font-family: "Courier New", monospace;
+}
+
+
+/* ============================================================================
+   LISTS (QUEUE & HISTORY)
+   ============================================================================ */
+
+.list {
+  min-height: 100px;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: var(--current-line);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.list::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--comment);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--bg);
 }
 
 .list-item {
@@ -430,22 +425,81 @@ h2 {
   margin-top: 5px;
 }
 
-.badge {
-  background: var(--green);
-  color: var(--bg);
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.85em;
-  font-weight: 600;
+
+/* ============================================================================
+   CONSOLE/LOGS
+   ============================================================================ */
+
+#console {
+  width: 100%;
+  min-height: 300px;
+  max-height: 500px;
+  font-family: monospace;
+  background: var(--bg2);
+  color: var(--foreground);
+  padding: 10px;
+  overflow-y: scroll;
+  font-size: 13px;
+  line-height: 1.4em;
 }
 
-.badge.error {
-  background: var(--red);
+#console span {
+  display: inline;
+  width: 100%;
 }
 
-.badge.info {
-  background: var(--cyan);
+#console::-webkit-scrollbar {
+  width: 10px;
 }
+
+#console::-webkit-scrollbar-track {
+  background: var(--current-line);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+#console::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--comment);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--bg);
+}
+
+.log-line span {
+  display: inline;
+}
+
+.log-line:hover {
+  background: var(--current-line);
+}
+
+.log-line .info {
+  color: var(--cyan);
+}
+
+.log-line .warning {
+  color: var(--orange);
+}
+
+.log-line .error {
+  color: var(--red);
+}
+
+.log-line .debug {
+  color: var(--yellow);
+}
+
+.log-line .log-date {
+  color: var(--purple);
+}
+
+.log-line .log-logger {
+  color: var(--comment);
+}
+
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
 
 .btn {
   padding: 10px 20px;
@@ -481,6 +535,36 @@ h2 {
   color: var(--bg);
 }
 
+
+/* ============================================================================
+   BADGES & STATUS ICONS
+   ============================================================================ */
+
+.badge {
+  background: var(--green);
+  color: var(--bg);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.badge.error {
+  background: var(--red);
+}
+
+.badge.info {
+  background: var(--cyan);
+}
+
+.success-icon {
+  color: var(--green);
+}
+
+.error-icon {
+  color: var(--red);
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -492,128 +576,50 @@ h2 {
   margin-bottom: 10px;
 }
 
-.success-icon {
-  color: var(--green);
-}
 
-.error-icon {
-  color: var(--red);
-}
+/* ============================================================================
+   ICONS
+   ============================================================================ */
 
-footer {
-  text-align: center;
-  padding: 20px;
-  color: var(--comment);
-  margin-top: 40px;
-  border-top: 1px solid var(--comment);
-}
-
-footer a {
-  color: var(--cyan);
-  text-decoration: none;
-}
-
-footer a:hover {
-  color: var(--purple);
-  text-decoration: underline;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  position: relative;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--comment);
-  border-top: 2px solid var(--comment);
-}
-
-.tab-button {
-  background: none;
-  border: none;
-  color: var(--foreground);
-  padding: 12px 24px;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all 0.2s;
-}
-
-.tab-button:hover {
-  color: var(--cyan);
-  background: rgba(139, 233, 253, 0.1);
-}
-
-.tab-button.active {
-  color: var(--cyan);
-  border-bottom-color: var(--cyan);
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-/* Title-switch */
-.title-switch {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  column-gap: 5px;
-}
-
-/* Switch */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 30px;
-  margin: 0px;
-}
-
-.switch input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-  cursor: pointer;
-}
-
-.slider {
-  position: absolute;
-  inset: 0;
-  background: var(--red);
-  transition: 0.3s;
-  border-radius: 34px;
-  border: 2px solid var(--comment);
-}
-
-.slider::before {
+[data-icon]:before {
   content: "";
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  left: 3px;
-  bottom: 3px;
-  background: var(--foreground);
-  border-radius: 50%;
-  transition: 0.3s;
+  display: inline-block;
+  margin: 0 0.1em;
 }
 
-.switch input:checked + .slider {
-  background: var(--green);
+[data-icon][data-icon="tampermonkey"]:before {
+  background: currentColor;
+  mask: url("../images/tampermonkey.svg") no-repeat center;
+  -webkit-mask: url("../images/tampermonkey.svg") no-repeat center;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.125em;
 }
 
-.switch input:checked + .slider::before {
-  transform: translateX(30px);
+[data-icon][data-icon="github"]:before {
+  background: currentColor;
+  mask: url("../images/github.svg") no-repeat center;
+  -webkit-mask: url("../images/github.svg") no-repeat center;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.125em;
 }
 
-/* Settings */
+.icon {
+  width: 0.8em;
+  margin-left: 0.2em;
+  margin-right: 0.2em;
+}
+
+
+/* ============================================================================
+   SETTINGS PAGE
+   ============================================================================ */
+
 .settings-content {
   padding: 20px;
 }
@@ -661,6 +667,13 @@ footer a:hover {
   border-color: var(--cyan);
 }
 
+#display-api-key {
+  flex: 1;
+  background: var(--bg2);
+  cursor: text;
+  font-family: "Courier New", monospace;
+}
+
 .test-result {
   margin-top: 10px;
   padding: 10px;
@@ -683,14 +696,66 @@ footer a:hover {
   color: var(--red);
 }
 
-#display-api-key {
-  flex: 1;
-  background: var(--bg2);
-  cursor: text;
-  font-family: "Courier New", monospace;
+
+/* ============================================================================
+   TOGGLE SWITCH
+   ============================================================================ */
+
+.title-switch {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 5px;
 }
 
-/* Login form */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+  margin: 0px;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--red);
+  transition: 0.3s;
+  border-radius: 34px;
+  border: 2px solid var(--comment);
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--foreground);
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background: var(--green);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(30px);
+}
+
+
+/* ============================================================================
+   LOGIN PAGE
+   ============================================================================ */
 
 .login-wrap {
   padding: 20px;
@@ -784,4 +849,27 @@ footer a:hover {
 
 .login-wrap .error.show {
   display: block;
+}
+
+
+/* ============================================================================
+   FOOTER
+   ============================================================================ */
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--comment);
+  margin-top: 40px;
+  border-top: 1px solid var(--comment);
+}
+
+footer a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+footer a:hover {
+  color: var(--purple);
+  text-decoration: underline;
 }
