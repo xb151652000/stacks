@@ -1,0 +1,104 @@
+// ============================================================================
+// DOWNLOAD COMPONENTS
+// ============================================================================
+
+// Add download section
+.add-item {
+  .card.input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: $spacing-xs;
+  }
+
+  .add-label {
+    font-size: 18px;
+    color: $foreground;
+    white-space: nowrap;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 7px;
+    border-radius: $border-radius-md;
+    @include border($border-thin, $purple);
+    background: $bg2;
+    color: $foreground;
+    font-size: 14px;
+  }
+
+  button.btn {
+    padding: 8px 18px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+}
+
+// Current download section
+.current-download {
+  @include card-base;
+  color: $foreground;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  border-color: $pink;
+
+  h2 {
+    color: $pink;
+  }
+
+  .title {
+    font-size: $font-size-large;
+    margin: $spacing-sm 0;
+    font-weight: 600;
+  }
+
+  .md5 {
+    font-family: $font-family-mono;
+    opacity: 0.8;
+    font-size: 0.9em;
+  }
+
+  .time {
+    margin-top: $spacing-sm;
+    opacity: 0.9;
+    font-size: 0.9em;
+  }
+}
+
+// Progress bar
+.progress-container {
+  width: 100%;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: $border-radius-xl;
+  margin-top: $spacing-md;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: repeating-linear-gradient(45deg, $green 0 48px, $orange 48px 84px);
+  background-size: 96px 96px;
+  animation: stripe-slide 1s linear infinite reverse;
+  @include box-shadow(inset 0 5px 10px $cyan, inset 0 -5px 10px $bg);
+  @include transition(width 2s linear);
+  will-change: width;
+  border-radius: $border-radius-xl;
+}
+
+@keyframes stripe-slide {
+  0% {
+    background-position: 0 -32px;
+  }
+  100% {
+    background-position: 96px -32px;
+  }
+}
+
+.progress-text {
+  margin-top: 8px;
+  font-size: 0.9em;
+  opacity: 0.9;
+  font-family: $font-family-mono;
+}

@@ -1,0 +1,28 @@
+// ============================================================================
+// TYPOGRAPHY
+// ============================================================================
+
+h1 {
+  color: $purple;
+  font-size: $font-size-xxlarge;
+  margin-bottom: $spacing-xs;
+}
+
+h2 {
+  color: $cyan;
+  font-size: 1.3em;
+  @include flex-between;
+  gap: $spacing-sm;
+}
+
+.subtitle {
+  color: $comment;
+  font-size: 0.82em;
+}
+
+.comment {
+  margin-top: 3px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: $comment;
+}

@@ -1,0 +1,55 @@
+// ============================================================================
+// LISTS (QUEUE & HISTORY)
+// ============================================================================
+
+.list {
+  min-height: 100px;
+  max-height: 800px;
+  overflow-y: auto;
+  @include custom-scrollbar;
+}
+
+.list-item {
+  padding: $spacing-md $spacing-lg;
+  border-bottom: $border-thin solid $comment;
+  @include flex-between;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-title {
+  font-weight: 600;
+  color: $foreground;
+  margin-bottom: $spacing-xs;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &-text {
+    flex: 1;
+  }
+}
+
+.item-md5 {
+  font-family: $font-family-mono;
+  font-size: $font-size-smaller;
+  color: $comment;
+}
+
+.item-time {
+  font-size: $font-size-small;
+  color: $comment;
+  margin-top: $spacing-xs;
+}
+
+.item-error {
+  color: $red;
+  font-size: $font-size-smaller;
+  margin-top: $spacing-xs;
+}

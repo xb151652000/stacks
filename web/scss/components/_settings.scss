@@ -1,0 +1,122 @@
+// ============================================================================
+// SETTINGS PAGE
+// ============================================================================
+
+.settings-content {
+  padding: $spacing-lg;
+}
+
+.settings-section {
+  margin-bottom: $spacing-xl;
+
+  h3 {
+    color: $purple;
+    font-size: $font-size-large;
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+    border-bottom: $border-thin solid $comment;
+  }
+}
+
+.settings-group {
+  margin-bottom: $spacing-lg;
+
+  label {
+    display: block;
+    color: $foreground;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  input[type="number"],
+  input[type="password"],
+  input[type="text"],
+  select {
+    width: 100%;
+    max-width: 400px;
+    @include input-base;
+    padding: $spacing-sm;
+  }
+}
+
+#display-api-key {
+  flex: 1;
+  background: $bg2;
+  cursor: text;
+  font-family: $font-family-mono;
+}
+
+// Test results
+.test-result {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm;
+  border-radius: $border-radius-md;
+  font-size: 0.9em;
+  display: none;
+
+  &.success {
+    display: block;
+    background: rgba(80, 250, 123, 0.2);
+    @include border($border-thin, $green);
+    color: $green;
+  }
+
+  &.error {
+    display: block;
+    background: rgba(255, 85, 85, 0.2);
+    @include border($border-thin, $red);
+    color: $red;
+  }
+}
+
+// Toggle switch
+.title-switch {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: $spacing-xs;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+  margin: 0;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+
+    &:checked + .slider {
+      background: $green;
+
+      &::before {
+        transform: translateX(30px);
+      }
+    }
+  }
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: $red;
+  @include transition($transition-normal);
+  border-radius: $border-radius-pill;
+  @include border($border-medium, $comment);
+
+  &::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: $foreground;
+    border-radius: 50%;
+    @include transition($transition-normal);
+  }
+}

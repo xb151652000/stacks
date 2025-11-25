@@ -1,0 +1,46 @@
+// ============================================================================
+// ICONS
+// ============================================================================
+
+[data-icon] {
+  &:before {
+    content: "";
+    display: inline-block;
+    margin: 0 0.1em;
+  }
+
+  &[data-icon="tampermonkey"]:before {
+    @include icon-mask("../images/tampermonkey.svg");
+  }
+
+  &[data-icon="github"]:before {
+    @include icon-mask("../images/github.svg");
+  }
+}
+
+.icon {
+  width: 0.8em;
+  margin-left: 0.2em;
+  margin-right: 0.2em;
+}
+
+// Status icons
+.success-icon {
+  @include state-color($green);
+}
+
+.error-icon {
+  @include state-color($red);
+}
+
+.item-status-icon,
+.item-method-icon {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+// Empty state icon
+.empty-state-icon {
+  font-size: 3em;
+  margin-bottom: $spacing-sm;
+}
