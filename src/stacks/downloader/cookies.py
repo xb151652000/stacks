@@ -3,21 +3,40 @@ import json
 from stacks.constants import COOKIE_CACHE_FILE
 
 def _load_cached_cookies(d):
-    """Load cookies from cache file."""
+    """Load cookies from cache file.
+
+    Supports two formats:
+    1. JSON format: {"timestamp": 123456, "cookies": {"name": "value", ...}}
+    2. Simple dict format: {"name": "value", ...}
+
+    If timestamp is present and cookies are >24h old, they're still loaded but marked as potentially stale.
+    Cookies are set specifically for annas-archive.org domain.
+    """
     if COOKIE_CACHE_FILE.exists():
         try:
             with open(COOKIE_CACHE_FILE, 'r') as f:
                 data = json.load(f)
-                # Check if cookies are recent (< 24 hours old)
-                cached_time = data.get('timestamp', 0)
-                if time.time() - cached_time < 86400:
+
+                # Detect format
+                if 'cookies' in data:
+                    # Format 1: Full format with timestamp
                     cookies_dict = data.get('cookies', {})
-                    for name, value in cookies_dict.items():
-                        d.session.cookies.set(name, value)
-                    d.logger.info(f"Loaded {len(cookies_dict)} cached cookies")
-                    return True
+                    cached_time = data.get('timestamp', 0)
+
+                    if time.time() - cached_time < 86400:
+                        d.logger.info(f"Loaded {len(cookies_dict)} fresh cached cookies")
+                    else:
+                        d.logger.info(f"Loaded {len(cookies_dict)} cached cookies (potentially stale)")
                 else:
-                    d.logger.debug("Cached cookies expired (>24h old)")
+                    # Format 2: Simple dict of cookies (manual entry)
+                    cookies_dict = data
+                    d.logger.info(f"Loaded {len(cookies_dict)} manually cached cookies")
+
+                # Load cookies into session for annas-archive.org domain only
+                for name, value in cookies_dict.items():
+                    d.session.cookies.set(name, value, domain='annas-archive.org')
+
+                return True
         except Exception as e:
             d.logger.debug(f"Failed to load cached cookies: {e}")
     return False

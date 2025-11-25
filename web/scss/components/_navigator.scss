@@ -22,13 +22,27 @@
   cursor: pointer;
   border-bottom: 3px solid transparent;
   @include transition(all $transition-fast);
+  width: auto;
 
   &:hover {
     color: $cyan;
     background: rgba(139, 233, 253, 0.1);
   }
 
+    &::before {
+      font-size:$font-size-large;
+    }
+
   &.active {
+    &[data-tab="settings"]::after {
+      content: "Settings";
+    }
+    &[data-tab="downloads"]::after {
+      content: "Downloads";
+    }
+    &[data-tab="console"]::after {
+      content: "Console";
+    }
     color: $cyan;
     border-bottom-color: $cyan;
   }

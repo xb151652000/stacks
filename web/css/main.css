@@ -763,14 +763,27 @@ footer a:hover {
   border-bottom: 3px solid transparent;
   -webkit-transition: all 0.2s;
   transition: all 0.2s;
+  width: auto;
 }
 .tab-button:hover {
   color: #8be9fd;
   background: rgba(139, 233, 253, 0.1);
 }
+.tab-button::before {
+  font-size: 1.2em;
+}
 .tab-button.active {
   color: #8be9fd;
   border-bottom-color: #8be9fd;
+}
+.tab-button.active[data-tab=settings]::after {
+  content: "Settings";
+}
+.tab-button.active[data-tab=downloads]::after {
+  content: "Downloads";
+}
+.tab-button.active[data-tab=console]::after {
+  content: "Console";
 }
 
 .tab-content {

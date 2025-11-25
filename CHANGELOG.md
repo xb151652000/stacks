@@ -14,6 +14,7 @@
   - Downloads are randomized to spread load across multiple servers
   - Downloader identifies files files that are unreasonably small and tries next server
   - Added a more secure way of finding the correct file name
+  - More information on the status page about what's happening with a download
 - Removed alerts and replaced them with a new toast system
 
 ### Minor changes

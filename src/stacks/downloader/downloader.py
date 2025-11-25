@@ -58,12 +58,12 @@ class AnnaDownloader:
                 
         if flaresolverr_url:
             self.logger.info(f"FlareSolverr enabled: {flaresolverr_url}")
-            self.logger.info("Using ALL download sources (Anna's Archive + external mirrors)")
-            # Load cached cookies if available
-            self.load_cached_cookies()
+            self.logger.info("Using ALL download sources (Anna's Archive slow_download + external mirrors)")
         else:
-            self.logger.warning("FlareSolverr not configured - slow_download servers will be SKIPPED")
-            self.logger.info("Using external mirrors only (Libgen, library.lol, etc.)")
+            self.logger.info("FlareSolverr not configured - using external mirrors and slow_download with cached cookies")
+
+        # Always try to load cached cookies (useful for slow_download even without FlareSolverr)
+        self.load_cached_cookies()
     
     # Cookies
     def load_cached_cookies(self):

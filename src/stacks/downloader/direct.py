@@ -108,10 +108,21 @@ def download_direct(d, download_url, title=None, total_size=None, supports_resum
 
                 # Verify MD5 hash if provided
                 if md5:
+                    if hasattr(d, 'status_callback'):
+                        d.status_callback("Verifying MD5 checksum...")
                     d.logger.info("Verifying MD5 checksum...")
                     file_md5 = calculate_md5(temp_path)
                     if file_md5.lower() != md5.lower():
                         d.logger.error(f"MD5 mismatch: expected {md5}, got {file_md5}")
+                        if hasattr(d, 'status_callback'):
+                            d.status_callback(f"MD5 verification failed - file corrupted")
+                        # Reset progress to 0%
+                        if d.progress_callback:
+                            d.progress_callback({
+                                'total_size': 0,
+                                'downloaded': 0,
+                                'percent': 0
+                            })
                         temp_path.unlink()
                         return None
                     d.logger.info("MD5 checksum verified")
