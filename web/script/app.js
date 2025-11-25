@@ -521,15 +521,24 @@ function testFastKey() {
     .then((data) => {
       if (data.success) {
         resultDiv.className = "test-result success";
-        resultDiv.textContent = `✓ Key is valid! Downloads available: ${data.downloads_left}/${data.downloads_per_day}`;
+        const icon = document.createElement("span");
+        icon.setAttribute("data-icon", "check");
+        resultDiv.textContent = ` Key is valid! Downloads available: ${data.downloads_left}/${data.downloads_per_day}`;
+        resultDiv.prepend(icon);
       } else {
         resultDiv.className = "test-result error";
-        resultDiv.textContent = `✗ ${data.error}`;
+        const icon = document.createElement("span");
+        icon.setAttribute("data-icon", "close");
+        resultDiv.textContent = ` ${data.error}`;
+        resultDiv.prepend(icon);
       }
     })
     .catch((err) => {
       resultDiv.className = "test-result error";
-      resultDiv.textContent = `✗ Connection error: ${err.message}`;
+      const icon = document.createElement("span");
+      icon.setAttribute("data-icon", "close");
+      resultDiv.textContent = ` Connection error: ${err.message}`;
+      resultDiv.prepend(icon);
     });
 }
 
@@ -556,15 +565,24 @@ function testFlaresolverr() {
     .then((data) => {
       if (data.success) {
         resultDiv.className = "test-result success";
-        resultDiv.textContent = `✓ ${data.message}`;
+        const icon = document.createElement("span");
+        icon.setAttribute("data-icon", "check");
+        resultDiv.textContent = ` ${data.message}`;
+        resultDiv.prepend(icon);
       } else {
         resultDiv.className = "test-result error";
-        resultDiv.textContent = `✗ ${data.error}`;
+        const icon = document.createElement("span");
+        icon.setAttribute("data-icon", "close");
+        resultDiv.textContent = ` ${data.error}`;
+        resultDiv.prepend(icon);
       }
     })
     .catch((err) => {
       resultDiv.className = "test-result error";
-      resultDiv.textContent = `✗ Connection error: ${err.message}`;
+      const icon = document.createElement("span");
+      icon.setAttribute("data-icon", "close");
+      resultDiv.textContent = ` Connection error: ${err.message}`;
+      resultDiv.prepend(icon);
     });
 }
 
@@ -620,48 +638,45 @@ function updateHistoryList(history) {
   history.forEach((item) => {
     const clone = template.content.cloneNode(true);
 
-    // Status icon
+    // Status icon (success vs failed)
     const statusIcon = clone.querySelector(".item-status-icon");
     if (item.success) {
-      statusIcon.textContent = "✓";
+      statusIcon.setAttribute("data-icon", "check");
       statusIcon.className = "item-status-icon success-icon";
     } else {
-      statusIcon.textContent = "✗";
+      statusIcon.setAttribute("data-icon", "close");
       statusIcon.className = "item-status-icon error-icon";
     }
 
-    // Title - show filename if available, otherwise show MD5
+    // Title - filename or MD5
     const displayName = item.filename || item.md5;
     clone.querySelector(".item-title-text").textContent = displayName;
 
     // Method icon (fast vs mirror)
     const methodIcon = clone.querySelector(".item-method-icon");
+
     if (item.success && item.used_fast_download) {
-      methodIcon.textContent = "⚡";
+      methodIcon.setAttribute("data-icon", "speed-up");
       methodIcon.title = "Fast";
-      methodIcon.style.fontSize = "0.8em";
-      methodIcon.style.opacity = "0.7";
     } else if (item.success) {
-      methodIcon.textContent = "🌐";
+      methodIcon.setAttribute("data-icon", "slow-down");
       methodIcon.title = "Mirror";
-      methodIcon.style.fontSize = "0.8em";
-      methodIcon.style.opacity = "0.7";
     } else {
-      methodIcon.textContent = "";
+      methodIcon.removeAttribute("data-icon");
     }
 
-    // MD5 and time
+    // MD5 + timestamp
     clone.querySelector(".item-md5").textContent = item.md5;
     clone.querySelector(".item-time").textContent = formatTime(item.completed_at);
 
-    // Error message (if failed)
+    // Error message
     if (item.error) {
       const errorDiv = clone.querySelector(".item-error");
       errorDiv.textContent = item.error;
       errorDiv.style.display = "block";
     }
 
-    // Retry button (if failed)
+    // Retry button
     if (!item.success) {
       const retryBtn = clone.querySelector(".retry-btn");
       retryBtn.style.display = "inline-block";
@@ -671,6 +686,7 @@ function updateHistoryList(history) {
     historyList.appendChild(clone);
   });
 }
+
 
 // ============================================================================
 // EVENT HANDLERS & INITIALIZATION

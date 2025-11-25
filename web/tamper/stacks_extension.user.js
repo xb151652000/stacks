@@ -220,7 +220,7 @@
             overlay.remove();
             dialog.remove();
             
-            showNotification('✓ Settings saved! Refresh the page to apply changes.', 'success');
+            showNotification('Settings saved! Refresh the page to apply changes.', 'success');
         });
         
         // Cancel
@@ -367,7 +367,7 @@
                 const result = await addToQueue(md5, 'search-page');
 
                 if (result.success) {
-                    showNotification(`✓ Added to queue`, 'success');
+                    showNotification(`Added to queue`, 'success');
                     btn.innerHTML = '<span class="text-[15px] align-text-bottom inline-block icon-[mdi--check] mr-[1px]"></span>Queued';
                     setTimeout(() => {
                         btn.innerHTML = originalText;
@@ -379,7 +379,7 @@
                     btn.style.pointerEvents = 'auto';
                 }
             } catch (error) {
-                showNotification(`✗ ${error.message}`, 'error');
+                showNotification(`${error.message}`, 'error');
                 btn.innerHTML = originalText;
                 btn.style.pointerEvents = 'auto';
             }
@@ -495,10 +495,10 @@
     console.log('%cServer: ' + CONFIG.serverUrl, 'color: #2196F3;');
     
     if (CONFIG.apiKey) {
-        console.log('%c✓ API Key: Configured', 'color: #4CAF50;');
+        console.log('%cAPI Key: Configured', 'color: #4CAF50;');
     } else {
-        console.log('%c✗ API Key: NOT CONFIGURED', 'color: #f44336; font-weight: bold;');
-        console.log('%c→ Get key from: Stacks web interface → Settings tab', 'color: #ff9800;');
+        console.log('%cAPI Key: NOT CONFIGURED', 'color: #f44336; font-weight: bold;');
+        console.log('%cGet key from: Stacks web interface → Settings tab', 'color: #ff9800;');
     }
     
     console.log('%cNotifications: ' + (CONFIG.showNotifications ? 'Enabled' : 'Disabled'), 'color: #666;');

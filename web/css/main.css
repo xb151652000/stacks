@@ -43,12 +43,79 @@ h2 {
   content: "";
   display: inline-block;
   margin: 0 0.1em;
+  font-weight: normal;
 }
 [data-icon][data-icon=close-large]:before {
   content: "\f4c7";
 }
 [data-icon][data-icon=close-large-line]:before {
   content: "\f4c8";
+}
+[data-icon][data-icon=slow-down]:before {
+  content: "\f368";
+}
+[data-icon][data-icon=slow-down-line]:before {
+  content: "\f369";
+}
+[data-icon][data-icon=speed-up]:before {
+  content: "\f370";
+}
+[data-icon][data-icon=speed-up-line]:before {
+  content: "\f371";
+}
+[data-icon][data-icon=close]:before {
+  content: "\eb98";
+}
+[data-icon][data-icon=close-line]:before {
+  content: "\eb99";
+}
+[data-icon][data-icon=check]:before {
+  content: "\eb7a";
+}
+[data-icon][data-icon=check-line]:before {
+  content: "\eb7b";
+}
+[data-icon][data-icon=import]:before {
+  content: "\f446";
+}
+[data-icon][data-icon=import-line]:before {
+  content: "\f447";
+}
+[data-icon][data-icon=book-2]:before {
+  content: "\ead2";
+}
+[data-icon][data-icon=book-2-line]:before {
+  content: "\ead3";
+}
+[data-icon][data-icon=file-download]:before {
+  content: "\ecd8";
+}
+[data-icon][data-icon=file-download-line]:before {
+  content: "\ecd9";
+}
+[data-icon][data-icon=settings-3]:before {
+  content: "\f0e5";
+}
+[data-icon][data-icon=settings-3-line]:before {
+  content: "\f0e6";
+}
+[data-icon][data-icon=terminal-box]:before {
+  content: "\f1f5";
+}
+[data-icon][data-icon=terminal-box-line]:before {
+  content: "\f1f6";
+}
+[data-icon][data-icon=key]:before {
+  content: "\ee70";
+}
+[data-icon][data-icon=key-line]:before {
+  content: "\ee71";
+}
+[data-icon][data-icon=user]:before {
+  content: "\f25f";
+}
+[data-icon][data-icon=user-line]:before {
+  content: "\f264";
 }
 [data-icon][data-icon=warning]:before {
   content: "\eca0";

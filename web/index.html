@@ -16,9 +16,9 @@
       <nav class="tabs">
         <!-- Main Tabs -->
         <div>
-          <button class="tab-button active" data-tab="downloads">Downloads</button>
-          <button class="tab-button" data-tab="settings">Settings</button>
-          <button class="tab-button" data-tab="console">Console</button>
+          <button class="tab-button active" data-tab="downloads" data-icon="file-download">Downloads</button>
+          <button class="tab-button" data-tab="settings" data-icon="settings-3">Settings</button>
+          <button class="tab-button" data-tab="console" data-icon="terminal-box">Console</button>
         </div>
 
         <!-- Current Status -->
@@ -78,7 +78,7 @@
             </div>
             <div id="queue-list" class="list">
               <div class="empty-state">
-                <div class="empty-state-icon">📭</div>
+                <div class="empty-state-icon" data-icon="import"></div>
                 <div>Queue is empty</div>
               </div>
             </div>
@@ -92,7 +92,7 @@
             </div>
             <div id="history-list" class="list">
               <div class="empty-state">
-                <div class="empty-state-icon">📝</div>
+                <div class="empty-state-icon" data-icon="book-2"></div>
                 <div>No download history yet</div>
               </div>
             </div>
@@ -254,14 +254,14 @@
 
     <template id="queue-empty-template">
       <div class="empty-state">
-        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-icon" data-icon="import"></div>
         <div>Queue is empty</div>
       </div>
     </template>
 
     <template id="history-empty-template">
       <div class="empty-state">
-        <div class="empty-state-icon">📝</div>
+        <div class="empty-state-icon" data-icon="book-2"></div>
         <div>No download history yet</div>
       </div>
     </template>
