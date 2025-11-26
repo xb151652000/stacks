@@ -38,7 +38,8 @@ coverage.xml
 
 # Personal scripts
 release.sh
-todo.md
+cleanup.sh
+
 
 # Project
 /download/
@@ -46,3 +47,4 @@ todo.md
 /logs/
 /cache/
 RELEASE_CHECKLIST.md
+todo.md
