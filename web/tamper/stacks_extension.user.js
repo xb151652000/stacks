@@ -24,7 +24,7 @@
     // ============================================================
 
     const DEFAULT_SERVER_URL = 'http://localhost:7788';
-    const SCRIPT_VERSION = '1.1.0'; // Keep in sync with @version
+    const SCRIPT_VERSION = GM_info.script.version;
 
     const CONFIG = {
         serverUrl: DEFAULT_SERVER_URL,

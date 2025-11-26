@@ -19,6 +19,9 @@
   - Added MD5 checksum verification for all downloads
   - Real-time status updates showing mirror progress and download stages
 - Removed alerts and replaced them with a new toast system
+- Stacks Extension Updated
+  - Added ability to make sure it is the latest version compared to the server
+  - Updated layout to better mimic the Stacks Frontend
 - Added in Flaresolverr to the installation example
 
 ### Minor changes
