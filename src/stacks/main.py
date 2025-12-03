@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+import os
+import sys
+import signal
+import argparse
+from stacks.server.webserver import create_app
+
+from pathlib import Path
+
+from stacks.constants import CONFIG_FILE, PROJECT_ROOT, LOG_PATH, DOWNLOAD_PATH
+
+# ANSI color codes (Dracula theme)
+INFO = "\033[38;2;139;233;253m"       # cyan
+WARN = "\033[38;2;255;184;108m"       # orange
+GOOD = "\033[38;2;80;250;123m"        # green
+PINK = "\033[38;2;255;102;217m"       # pink
+PURPLE = "\033[38;2;178;102;255m"     # purple
+BG = "\033[48;2;40;42;54m"            # black background
+PINKBG = "\033[48;2;255;102;217m"     # pink background
+RESET = "\033[0m"                     # reset
+
+def print_logo(version: str):
+    """Display the super cool STACKS logo"""
+    dashes = '─' * (52 - len(version))
+    
+    print(f"{BG}{PURPLE} ┌───────────────────────────────────────────────────────────┐ {RESET}")
+    print(f"{BG}{PURPLE} │                                                           {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}     ▄████▄ ████████  ▄█▄     ▄████▄  ██    ▄██ ▄████▄     {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}    ██▀  ▀██   ██    ▄{PINKBG}{PURPLE}▄{BG}▀{PINKBG}▄{BG}{PINK}▄   ██▀  ▀██ ██  ▄██▀ ██▀  ▀██    {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}    ██▄        ██    █{PURPLE}█ █{PINK}█  ██        ██▄██▀   ██▄         {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}     ▀████▄    ██   █{PURPLE}█   █{PINK}█ ██        ████      ▀████▄     {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}         ▀██   ██   █{PURPLE}█   █{PINK}█ ██        ██▀██▄        ▀██    {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}    ██▄  ▄██   ██  █{PURPLE}█     █{PINK}█ ██▄  ▄██ ██  ▀██▄ ██▄  ▄██    {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │{PINK}     ▀████▀    ██  █{PURPLE}▀     ▀{PINK}█  ▀████▀  ██    ▀██ ▀████▀     {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} │                                                           {PURPLE}│ {RESET}")
+    print(f"{BG}{PURPLE} └{dashes}╢v{version}╟────┘ {RESET}")
+    sys.stdout.flush()  # Force flush before exec
+    sys.stdout.flush()
+
+def ensure_directories():
+    """Ensure essential directories exist."""
+    dirs = [
+        Path(CONFIG_FILE).parent,
+        Path(LOG_PATH),
+        Path(DOWNLOAD_PATH),
+    ]
+    for directory in dirs:
+        directory.mkdir(parents=True, exist_ok=True)
+
+
+def setup_config(config_path):
+    """
+    Ensure a config file exists.
+    """
+    # Use either provided config, or default
+    cfg_path = Path(config_path) if config_path else Path(CONFIG_FILE)
+
+    print("◼ Checking configuration...")
+    sys.stdout.flush()
+
+    if not cfg_path.exists():
+        print("  No config.yaml found — creating new one.")
+        cfg_path.write_text("{}\n")
+        cfg_path.chmod(0o600)
+    else:
+        print(f"  Using config at {cfg_path}")
+
+    return str(cfg_path)
+
+
+def setup_signal_handlers(app):
+    """Setup graceful shutdown handlers for SIGTERM and SIGINT."""
+    def shutdown_handler(signum, frame):
+        signal_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
+        print(f"\n{WARN}◼ Received {signal_name}, shutting down gracefully...{RESET}")
+        sys.stdout.flush()
+
+        # Stop the worker thread
+        if hasattr(app, 'stacks_worker') and app.stacks_worker:
+            print(f"{INFO}  Stopping download worker...{RESET}")
+            sys.stdout.flush()
+            app.stacks_worker.stop()
+
+        # Cleanup downloader resources
+        if hasattr(app, 'stacks_worker') and app.stacks_worker and hasattr(app.stacks_worker, 'downloader'):
+            print(f"{INFO}  Cleaning up downloader...{RESET}")
+            sys.stdout.flush()
+            app.stacks_worker.downloader.cleanup()
+
+        # Save queue state
+        if hasattr(app, 'stacks_queue') and app.stacks_queue:
+            print(f"{INFO}  Saving queue state...{RESET}")
+            sys.stdout.flush()
+            app.stacks_queue.save()
+
+        print(f"{GOOD}◼ Shutdown complete{RESET}")
+        sys.stdout.flush()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, shutdown_handler)
+    signal.signal(signal.SIGINT, shutdown_handler)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Start the Stacks server.")
+    parser.add_argument(
+        "-c", "--config",
+        help="Path to an alternative config.yaml file"
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable Flask debug mode for development (auto-reload on file changes)"
+    )
+    args = parser.parse_args()
+
+    # Set UTF-8 encoding
+    os.environ.setdefault("LANG", "C.UTF-8")
+
+    # Read version
+    version_file = PROJECT_ROOT / "VERSION"
+    version = version_file.read_text().strip() if version_file.exists() else "unknown"
+    print_logo(version)
+
+    # Ensure directories exist
+    ensure_directories()
+
+    # Load or create config.yaml
+    config_path = setup_config(args.config)
+
+    # Detect password reset request
+    if os.environ.get("RESET_ADMIN", "false").lower() == "true":
+        print("! RESET_ADMIN=true detected - admin password will be reset!\n")
+        sys.stdout.flush()
+
+    # Switch working dir
+    os.chdir(PROJECT_ROOT)
+
+    # Determine debug mode from CLI arg or environment variable
+    debug_mode = args.debug or os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true")
+
+    if debug_mode:
+        print(f"{WARN}◼ Debug mode enabled - template auto-reload active{RESET}")
+        sys.stdout.flush()
+
+    print("◼ Starting Stacks...")
+    sys.stdout.flush()
+
+    app = create_app(config_path, debug_mode=debug_mode)
+
+    # Setup graceful shutdown handlers
+    setup_signal_handlers(app)
+
+    host = app.stacks_host
+    port = app.stacks_port
+
+    app.run(host, port, debug=debug_mode, use_reloader=False)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"\nError during startup: {e}", file=sys.stderr)
+        sys.exit(1)
