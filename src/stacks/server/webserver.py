@@ -1,0 +1,62 @@
+from flask import Flask
+from flask_cors import CORS
+from stacks.config.config import Config
+from stacks.constants import WWW_PATH, TIMESTAMP
+from stacks.server.queue import DownloadQueue
+from stacks.server.worker import DownloadWorker
+from stacks.utils.logutils import setup_logging
+from stacks.api import register_api
+import logging
+
+def create_app(config_path: str, debug_mode: bool = False):
+    """Create and configure the Flask application."""
+    # ---- Setup logging ---
+    setup_logging(None)
+    logger = logging.getLogger("stacks.server")
+    logger.info("Stacks server initializing...")
+
+    app = Flask(
+        __name__,
+        template_folder=WWW_PATH,
+        static_folder=WWW_PATH,
+        static_url_path=""
+    )
+    CORS(app, supports_credentials=True)
+
+    # ---- Enable template auto-reload in debug mode ----
+    if debug_mode:
+        app.config['TEMPLATES_AUTO_RELOAD'] = True
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable static file caching
+        logger.info("Debug mode: Template auto-reload enabled")
+
+    # ---- Load config ----
+    config = Config(config_path)
+    setup_logging(config)
+
+    # ---- Set secret key from config ----
+    app.secret_key = config.get("api", "session_secret")
+
+    # ---- Initialize queue + worker ----
+    queue = DownloadQueue(config)
+    worker = DownloadWorker(queue, config)
+    worker.start()
+
+    # ---- Attach backend objects to app ----
+    app.stacks_config = config
+    app.stacks_queue = queue
+    app.stacks_worker = worker
+
+    # ---- Set default port and host ----
+    app.stacks_host = config.get("server", "host", default="0.0.0.0")
+    app.stacks_port = config.get("server", "port", default=7788)
+
+
+    # ---- Cache busting makes me feel good ----
+    @app.context_processor
+    def inject_constants():
+        return dict(TIMESTAMP=TIMESTAMP)
+
+    # ---- Register all API routes ----
+    register_api(app)
+    logger.info("Stacks initialized")    
+    return app
