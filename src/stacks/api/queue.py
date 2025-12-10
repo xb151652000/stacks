@@ -10,23 +10,24 @@ from . import api_bp
 from stacks.utils.md5utils import extract_md5
 from stacks.security.auth import (
     require_auth,
+    require_auth_with_permissions,
 )
 
 logger = logging.getLogger("api")
 
 @api_bp.route('/api/queue/remove', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_queue_remove():
     """Remove item from queue"""
     data = request.json
     md5 = data.get('md5')
-    
+
     if not md5:
         return jsonify({'success': False, 'error': 'MD5 required'}), 400
-    
+
     q = current_app.stacks_queue
     removed = q.remove_from_queue(md5)
-    
+
     return jsonify({
         'success': removed,
         'message': 'Removed from queue' if removed else 'Not found in queue'
@@ -34,7 +35,7 @@ def api_queue_remove():
 
 
 @api_bp.route('/api/queue/clear', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_queue_clear():
     """Clear entire queue"""
     q = current_app.stacks_queue
@@ -45,32 +46,47 @@ def api_queue_clear():
     })
 
 @api_bp.route('/api/queue/add', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=True)
 def api_queue_add():
     """Add item to queue"""
     data = request.json
     md5 = data.get('md5')
-    
+    subfolder = data.get('subfolder')
+
     if not md5:
         return jsonify({'success': False, 'error': 'MD5 required'}), 400
-    
+
     # Validate MD5
     extracted_md5 = extract_md5(md5)
-    
+
     if not extracted_md5:
         return jsonify({'success': False, 'error': 'Invalid MD5 format'}), 400
-    
+
+    # Validate subfolder if provided
+    validated_subfolder = None
+    if subfolder:
+        config = current_app.stacks_config
+        allowed_subdirs = config.get('downloads', 'subdirectories', default=None)
+
+        # If subfolder is provided but not in allowed list, ignore it (revert to default)
+        if allowed_subdirs and isinstance(allowed_subdirs, list) and subfolder in allowed_subdirs:
+            validated_subfolder = subfolder
+        elif subfolder:
+            logger.warning(f"Subfolder '{subfolder}' not in allowed list, reverting to default")
+
     # Add to queue
     q = current_app.stacks_queue
     success, message = q.add(
         extracted_md5,
-        source=data.get('source')
+        source=data.get('source'),
+        subfolder=validated_subfolder
     )
-    
+
     return jsonify({
         'success': success,
         'message': message,
-        'md5': extracted_md5
+        'md5': extracted_md5,
+        'subfolder': validated_subfolder
     })
 
 @api_bp.route('/api/queue/pause', methods=['POST'])

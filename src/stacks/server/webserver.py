@@ -1,15 +1,21 @@
 from flask import Flask
 from flask_cors import CORS
 from stacks.config.config import Config
-from stacks.constants import WWW_PATH, TIMESTAMP
+from stacks.constants import WWW_PATH, TIMESTAMP, CONFIG_FILE
 from stacks.server.queue import DownloadQueue
 from stacks.server.worker import DownloadWorker
 from stacks.utils.logutils import setup_logging
 from stacks.api import register_api
 import logging
+import os
 
-def create_app(config_path: str, debug_mode: bool = False):
+def create_app(config_path: str = None, debug_mode: bool = False):
     """Create and configure the Flask application."""
+    # ---- Use default config path if none provided ----
+    if config_path is None:
+        # Check environment variable set by main.py for gunicorn
+        config_path = os.environ.get("STACKS_CONFIG_PATH", str(CONFIG_FILE))
+
     # ---- Setup logging ---
     setup_logging(None)
     logger = logging.getLogger("stacks.server")

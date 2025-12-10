@@ -8,10 +8,15 @@ let lastData = "{}";
 let lastLog = "{}";
 let consoleInterval = null;
 const md5Regex = /[a-fA-F0-9]{32}/;
+let subdirectoriesTagInput = null;
 
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
+
+function capitalizeFirstLetter(val) {
+  return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 
 function formatTime(isoString) {
   const date = new Date(isoString);
@@ -152,6 +157,15 @@ function updateStatus() {
         document.getElementById("current-title").textContent = displayName;
         document.getElementById("current-md5").textContent = data.current.md5;
 
+        // Show subfolder tag if present
+        const currentSubfolderEl = document.getElementById("current-subfolder");
+        if (data.current.subfolder) {
+          currentSubfolderEl.textContent = data.current.subfolder.split("/").pop();
+          currentSubfolderEl.style.display = "inline-block";
+        } else {
+          currentSubfolderEl.style.display = "none";
+        }
+
         // Show status message if available
         const statusEl = document.getElementById("current-status");
         if (data.current.status_message) {
@@ -181,13 +195,13 @@ function updateStatus() {
       const pauseBtn = document.getElementById("pause-btn");
       if (data.paused) {
         pauseBtn.title = "Resume downloads";
-        pauseBtn.classList.add("btn-success")
-        pauseBtn.classList.remove("btn-warning")
+        pauseBtn.classList.add("btn-success");
+        pauseBtn.classList.remove("btn-warning");
         pauseBtn.dataset.icon = "play-circle-line";
       } else {
         pauseBtn.title = "Pause downloads";
-        pauseBtn.classList.add("btn-warning")
-        pauseBtn.classList.remove("btn-success")
+        pauseBtn.classList.add("btn-warning");
+        pauseBtn.classList.remove("btn-success");
         pauseBtn.dataset.icon = "pause-circle-line";
       }
 
@@ -436,15 +450,30 @@ function retryFailed(md5) {
 // ============================================================================
 
 function loadSettings() {
-  // Load and display API key
+  // Load and display API keys
   apiFetch("/api/key")
     .then((r) => r.json())
     .then((data) => {
-      document.getElementById("display-api-key").value = data.api_key;
+      // Handle downloader key (may be null if disabled)
+      const downloaderKeyInput = document.getElementById("display-downloader-key");
+      if (data.downloader_key) {
+        downloaderKeyInput.value = data.downloader_key;
+      } else {
+        downloaderKeyInput.value = "Disabled (click Generate New to enable)";
+      }
+
+      // Handle admin key (may be null if disabled)
+      const apiKeyInput = document.getElementById("display-api-key");
+      if (data.api_key) {
+        apiKeyInput.value = data.api_key;
+      } else {
+        apiKeyInput.value = "Disabled (click Generate New to enable)";
+      }
     })
     .catch((err) => {
-      console.error("Failed to load API key:", err);
+      console.error("Failed to load API keys:", err);
       document.getElementById("display-api-key").value = "Error loading key";
+      document.getElementById("display-downloader-key").value = "Error loading key";
     });
 
   apiFetch("/api/config")
@@ -462,6 +491,12 @@ function loadSettings() {
       document.getElementById("setting-incomplete-folder-path").value = config.downloads?.incomplete_folder_path || "/download/incomplete";
       document.getElementById("setting-prefer-title-naming").checked = !!config.downloads?.prefer_title_naming;
       document.getElementById("setting-include-hash").value = config.downloads?.include_hash || "none";
+
+      // Subdirectories (use tag input component)
+      const subdirs = config.downloads?.subdirectories || [];
+      if (subdirectoriesTagInput) {
+        subdirectoriesTagInput.setTags(Array.isArray(subdirs) ? subdirs : []);
+      }
 
       // Fast Download
       document.getElementById("setting-fast-enabled").checked = !!config.fast_download?.enabled;
@@ -484,6 +519,9 @@ function loadSettings() {
 function saveSettings() {
   const newPassword = document.getElementById("setting-new-password").value;
 
+  // Get subdirectories from tag input component
+  const subdirectories = subdirectoriesTagInput ? subdirectoriesTagInput.getTags() : null;
+
   const config = {
     downloads: {
       delay: parseInt(document.getElementById("setting-delay").value),
@@ -492,6 +530,7 @@ function saveSettings() {
       incomplete_folder_path: document.getElementById("setting-incomplete-folder-path").value,
       prefer_title_naming: document.getElementById("setting-prefer-title-naming").checked,
       include_hash: document.getElementById("setting-include-hash").value,
+      subdirectories: subdirectories,
     },
     fast_download: {
       enabled: document.getElementById("setting-fast-enabled").checked,
@@ -566,22 +605,28 @@ function saveSettings() {
     });
 }
 
-function regenerateApiKey() {
-  apiFetch("/api/key/regenerate", {
+function regenerateApiKey(type) {
+  if (type == "admin") url = "/api/key/regenerate";
+  else if (type == "downloader") url = "/api/key/downloader/regenerate";
+  else return;
+  const fieldId = type === "admin" ? "display-api-key" : "display-downloader-key";
+  
+  apiFetch(url, {
     method: "POST",
   })
     .then((r) => r.json())
     .then((data) => {
       if (data.success) {
-        document.getElementById("display-api-key").value = data.api_key;
+        const keyValue = type === "admin" ? data.api_key : data.downloader_key;
+        document.getElementById(fieldId).value = keyValue;
         toasts.show({
-          title: "API Key",
-          message: "New API key generated!\n\nDon't forget to update your external tools with the new key.",
+          title: capitalizeFirstLetter(type) + " API Key",
+          message: "New " + type + " API key generated!",
           type: "success",
         });
       } else {
         toasts.show({
-          title: "API Key",
+          title: capitalizeFirstLetter(type) + " API Key",
           message: "Failed to regenerate API key: " + (data.error || "Unknown error"),
           type: "error",
         });
@@ -590,8 +635,43 @@ function regenerateApiKey() {
     .catch((err) => {
       console.error("Failed to regenerate API key:", err);
       toasts.show({
-        title: "API Key",
+        title: capitalizeFirstLetter(type) + " API Key",
         message: "Failed to regenerate API key: " + err.message,
+        type: "error",
+      });
+    });
+}
+
+function disableApiKey(type) {
+  if (type == "admin") url = "/api/key/disable";
+  else if (type == "downloader") url = "/api/key/downloader/disable";
+  else return;
+  const fieldId = type === "admin" ? "display-api-key" : "display-downloader-key";
+  apiFetch(url, {
+    method: "POST",
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        document.getElementById(fieldId).value = "Disabled (click Generate New to enable)";
+        toasts.show({
+          title: capitalizeFirstLetter(type) + " API Key",
+          message: capitalizeFirstLetter(type) + " API key has been disabled.",
+          type: "success",
+        });
+      } else {
+        toasts.show({
+          title: capitalizeFirstLetter(type) + " API Key",
+          message: "Failed to disable " + type + " key: " + (data.error || "Unknown error"),
+          type: "error",
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("Failed to disable " + type + " key:", err);
+      toasts.show({
+        title: capitalizeFirstLetter(type) + " API Key",
+        message: "Failed to disable " + type + " key: " + err.message,
         type: "error",
       });
     });
@@ -705,11 +785,17 @@ function updateQueueList(queue) {
   // Add each item
   queue.forEach((item) => {
     const clone = template.content.cloneNode(true);
-    const listItem = clone.querySelector(".list-item");
 
-    clone.querySelector(".item-title").textContent = item.md5;
+    clone.querySelector(".item-title-text").textContent = item.md5;
     clone.querySelector(".item-md5").textContent = item.md5;
     clone.querySelector(".item-time").textContent = "Added: " + formatTime(item.added_at);
+
+    // Show subfolder tag if present
+    const subfolderTag = clone.querySelector(".item-subfolder");
+    if (item.subfolder) {
+      subfolderTag.textContent = item.subfolder.split("/").pop();
+      subfolderTag.style.display = "inline-block";
+    }
 
     const removeBtn = clone.querySelector(".btn-danger");
     removeBtn.onclick = () => removeFromQueue(item.md5);
@@ -761,6 +847,13 @@ function updateHistoryList(history) {
       methodIcon.title = "Mirror";
     } else {
       methodIcon.removeAttribute("data-icon");
+    }
+
+    // Show subfolder tag if present
+    const subfolderTag = clone.querySelector(".item-subfolder");
+    if (item.subfolder) {
+      subfolderTag.textContent = item.subfolder.split("/").pop();
+      subfolderTag.style.display = "inline-block";
     }
 
     // MD5 + timestamp
@@ -855,6 +948,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const clipboard = new ClipboardJS('[data-clipboard-action="copy"]');
   clipboard.on("success", function (e) {
     e.clearSelection();
+  });
+
+  // Initialize tag input component for subdirectories
+  subdirectoriesTagInput = new TagInput("setting-subdirectories", {
+    placeholder: "Add subdirectory...",
+    allowDuplicates: false,
+    countLabel: "subdirectories",
+    countLabelSingular: "subdirectory",
   });
 });
 

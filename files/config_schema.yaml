@@ -22,11 +22,14 @@ login:
 
 api:
   key:
-    types: [32_BIT_KEY]
-    default: GENERATE_32_BIT_KEY
+    types: [SECRET_KEY, NULL]
+    default: null
+  downloader_key:
+    types: [SECRET_KEY, NULL]
+    default: null
   session_secret:
-    types: [32_BIT_KEY]
-    default: GENERATE_32_BIT_KEY
+    types: [SECRET_KEY]
+    default: GENERATE_SECRET_KEY
 
 downloads:
   delay:
@@ -54,6 +57,9 @@ downloads:
     types: [PATH]
     default: "/download/incomplete"
     max_length: 128
+  subdirectories:
+    types: [PATH_LIST]
+    default: null
 
 fast_download:
   enabled:

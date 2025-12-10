@@ -20,7 +20,8 @@ WWW_PATH = PROJECT_ROOT / "web"
 QUEUE_FILE = CONFIG_PATH / "queue.json"
 CONFIG_FILE = CONFIG_PATH / "config.yaml"
 CONFIG_SCHEMA_FILE = FILES_PATH / "config_schema.yaml"
-COOKIE_CACHE_DIR = CACHE_PATH  # Directory for domain-specific cookie files
+COOKIE_CACHE_DIR = CACHE_PATH
+GUNICORN_CONFIG_FILE = PROJECT_ROOT / "src" / "stacks" / "gunicorn_config.py"
 
 # Reserved Paths
 RESERVED_PATHS = ['/logs', '/config', '/files', '/cache', '/web']
@@ -50,7 +51,7 @@ LOGIN_ATTEMPT_WINDOW_MINUTES = 10
 RE_IPV4 = re.compile(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::(?:6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}))?$")
 RE_IPV6 = re.compile(r"^((\[((?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|([0-9A-Fa-f]{1,4}:){1,7}:|:([0-9A-Fa-f]{1,4}:){1,7}|([0-9A-Fa-f]{1,4}:){1,6}[0-9A-Fa-f]{1,4}|([0-9A-Fa-f]{1,4}:){1,5}(:[0-9A-Fa-f]{1,4}){1,2}|([0-9A-Fa-f]{1,4}:){1,4}(:[0-9A-Fa-f]{1,4}){1,3}|([0-9A-Fa-f]{1,4}:){1,3}(:[0-9A-Fa-f]{1,4}){1,4}|([0-9A-Fa-f]{1,4}:){1,2}(:[0-9A-Fa-f]{1,4}){1,5}|[0-9A-Fa-f]{1,4}:((:[0-9A-Fa-f]{1,4}){1,6})|:((:[0-9A-Fa-f]{1,4}){1,7}))\])(?::(?:6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}))?$|(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|([0-9A-Fa-f]{1,4}:){1,7}:|:([0-9A-Fa-f]{1,4}:){1,7}|([0-9A-Fa-f]{1,4}:){1,6}[0-9A-Fa-f]{1,4}|([0-9A-Fa-f]{1,4}:){1,5}(:[0-9A-Fa-f]{1,4}){1,2}|([0-9A-Fa-f]{1,4}:){1,4}(:[0-9A-Fa-f]{1,4}){1,3}|([0-9A-Fa-f]{1,4}:){1,3}(:[0-9A-Fa-f]{1,4}){1,4}|([0-9A-Fa-f]{1,4}:){1,2}(:[0-9A-Fa-f]{1,4}){1,5}|[0-9A-Fa-f]{1,4}:((:[0-9A-Fa-f]{1,4}){1,6})|:((:[0-9A-Fa-f]{1,4}){1,7}))$")
 RE_URL = re.compile(r"^(?:https?:\/\/)?(?=[a-zA-Z0-9])[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::(?:6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}))?$")
-RE_32_BIT_KEY = re.compile(r"^[A-Za-z0-9_-]{32}$")
+RE_SECRET_KEY = re.compile(r"^[A-Za-z0-9_-]{32}$")
 
 # Known MD5 for testing
 KNOWN_MD5 = "d6e1dc51a50726f00ec438af21952a45"

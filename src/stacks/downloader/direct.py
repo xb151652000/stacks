@@ -14,7 +14,7 @@ def calculate_md5(filepath):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-def download_direct(d, download_url, title=None, total_size=None, supports_resume=True, resume_attempts=3, md5=None):
+def download_direct(d, download_url, title=None, total_size=None, supports_resume=True, resume_attempts=3, md5=None, subfolder=None):
     """Download a file directly from a URL with resume support.
 
     Args:
@@ -25,6 +25,7 @@ def download_direct(d, download_url, title=None, total_size=None, supports_resum
         supports_resume: Whether resume is supported
         resume_attempts: Number of resume attempts
         md5: Expected MD5 hash for verification (optional)
+        subfolder: Subfolder path to save file to (optional)
     """
     try:
         # Determine filename
@@ -48,8 +49,14 @@ def download_direct(d, download_url, title=None, total_size=None, supports_resum
         elif file_ext not in LEGAL_FILES:
             d.logger.warning(f"Unusual file extension: {file_ext} (not in known legal files list)")
         
-        # Get unique path
-        base_final_path = d.output_dir / filename
+        # Get unique path (with subfolder if specified)
+        if subfolder:
+            # Create subfolder if it doesn't exist
+            output_dir = d.output_dir / subfolder.lstrip('/')
+            output_dir.mkdir(parents=True, exist_ok=True)
+            base_final_path = output_dir / filename
+        else:
+            base_final_path = d.output_dir / filename
         final_path = d.get_unique_filename(base_final_path)
         temp_path = d.incomplete_dir / f"{final_path.name}.part"
         

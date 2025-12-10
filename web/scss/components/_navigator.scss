@@ -2,6 +2,8 @@
 // TABS & NAVIGATION
 // ============================================================================
 
+@use '../base' as *;
+
 .tabs {
   display: flex;
   position: relative;
@@ -54,4 +56,17 @@
   &.active {
     display: block;
   }
+}
+
+// Version and actions container
+.tabs__actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+// Logout button modifier
+.btn--logout {
+  padding: 8px 16px;
+  font-size: 0.85em;
 }

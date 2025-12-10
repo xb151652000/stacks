@@ -8,13 +8,13 @@ from flask import (
 
 from . import api_bp
 from stacks.security.auth import (
-    require_auth,
+    require_auth_with_permissions,
 )
 
 logger = logging.getLogger("api")
 
 @api_bp.route('/api/history/clear', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_history_clear():
     """Clear entire history"""
     q = current_app.stacks_queue
@@ -26,7 +26,7 @@ def api_history_clear():
 
 
 @api_bp.route('/api/history/retry', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_history_retry():
     """Retry a failed download"""
     data = request.json

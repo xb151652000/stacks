@@ -4,10 +4,8 @@ import sys
 import signal
 import argparse
 from stacks.server.webserver import create_app
-
 from pathlib import Path
-
-from stacks.constants import CONFIG_FILE, PROJECT_ROOT, LOG_PATH, DOWNLOAD_PATH
+from stacks.constants import CONFIG_FILE, PROJECT_ROOT, LOG_PATH, DOWNLOAD_PATH, GUNICORN_CONFIG_FILE
 
 # ANSI color codes (Dracula theme)
 INFO = "\033[38;2;139;233;253m"       # cyan
@@ -140,22 +138,54 @@ def main():
     debug_mode = args.debug or os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true")
 
     if debug_mode:
-        print(f"{WARN}◼ Debug mode enabled - template auto-reload active{RESET}")
+        print(f"{WARN}◼ Debug mode enabled - using Flask development server{RESET}")
         sys.stdout.flush()
 
-    print("◼ Starting Stacks...")
-    sys.stdout.flush()
+        print("◼ Starting Stacks...")
+        sys.stdout.flush()
 
-    app = create_app(config_path, debug_mode=debug_mode)
+        app = create_app(config_path, debug_mode=debug_mode)
 
-    # Setup graceful shutdown handlers
-    setup_signal_handlers(app)
+        # Setup graceful shutdown handlers
+        setup_signal_handlers(app)
 
-    host = app.stacks_host
-    port = app.stacks_port
+        host = app.stacks_host
+        port = app.stacks_port
 
-    app.run(host, port, debug=debug_mode, use_reloader=False)
+        app.run(host, port, debug=debug_mode, use_reloader=False)
+    else:
+        print(f"{INFO}◼ Starting Stacks with Gunicorn...{RESET}")
+        sys.stdout.flush()
 
+        # Set config path as environment variable for gunicorn workers
+        os.environ["STACKS_CONFIG_PATH"] = config_path
+
+        # Check if running from source or PEX
+        if GUNICORN_CONFIG_FILE.exists():
+            # Running from source - use file path and set PYTHONPATH
+            current_pythonpath = os.environ.get("PYTHONPATH", "")
+            src_path = str(PROJECT_ROOT / "src")
+            if current_pythonpath:
+                os.environ["PYTHONPATH"] = f"{src_path}:{current_pythonpath}"
+            else:
+                os.environ["PYTHONPATH"] = src_path
+
+            gunicorn_cmd = [
+                "gunicorn",
+                "--config", str(GUNICORN_CONFIG_FILE),
+                "stacks.server.webserver:create_app()"
+            ]
+            # Execute gunicorn, replacing current process
+            os.execvp("gunicorn", gunicorn_cmd)
+        else:
+            # Running from PEX - import and run gunicorn directly
+            from gunicorn.app.wsgiapp import run
+            sys.argv = [
+                "gunicorn",
+                "--config", "python:stacks.gunicorn_config",
+                "stacks.server.webserver:create_app()"
+            ]
+            run()
 
 if __name__ == "__main__":
     try:

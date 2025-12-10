@@ -2,6 +2,8 @@
 // LOGIN PAGE
 // ============================================================================
 
+@use '../base' as *;
+
 .login-wrap {
   padding: $spacing-lg;
   font-family: $font-family-base;

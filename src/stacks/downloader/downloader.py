@@ -84,13 +84,13 @@ class AnnaDownloader:
     
     
     # Direct
-    def download_direct(self, download_url, title=None, total_size=None, supports_resume=True, resume_attempts=3, md5=None):
-        return download_direct(self, download_url, title, total_size, supports_resume, resume_attempts, md5)
+    def download_direct(self, download_url, title=None, total_size=None, supports_resume=True, resume_attempts=3, md5=None, subfolder=None):
+        return download_direct(self, download_url, title, total_size, supports_resume, resume_attempts, md5, subfolder)
     
     
     # Download orchestrator
-    def download(self, input_string, prefer_mirror=None, resume_attempts=3, filename=None, links=None):
-        return orchestrate_download(self, input_string, prefer_mirror, resume_attempts, filename, links)
+    def download(self, input_string, prefer_mirror=None, resume_attempts=3, filename=None, links=None, subfolder=None):
+        return orchestrate_download(self, input_string, prefer_mirror, resume_attempts, filename, links, subfolder)
  
  
     # Fast Download
@@ -118,8 +118,8 @@ class AnnaDownloader:
     
     
     # Mirrors
-    def download_from_mirror(self, mirror_url, mirror_type, md5, title=None, resume_attempts=3):
-        return download_from_mirror(self, mirror_url, mirror_type, md5, title, resume_attempts)
+    def download_from_mirror(self, mirror_url, mirror_type, md5, title=None, resume_attempts=3, subfolder=None):
+        return download_from_mirror(self, mirror_url, mirror_type, md5, title, resume_attempts, subfolder)
 
 
     # Utils

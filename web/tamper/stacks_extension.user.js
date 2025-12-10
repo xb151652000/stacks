@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Stacks - Anna's Archive Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.2
 // @description  Add download buttons to Anna's Archive that queue downloads to Stacks server
 // @author       Zelest Carlyone
 // @match        https://annas-archive.org/*
@@ -31,6 +31,30 @@
         apiKey: '',
         showNotifications: true,
     };
+
+    // Subdirectories cache
+    let SUBDIRECTORIES = [];
+    let subdirectoriesRefreshInterval = null;
+
+    // Get the last selected subdirectory
+    function getLastSubdirectory() {
+        return GM_getValue('stacksLastSubdirectory', '');
+    }
+
+    // Save the last selected subdirectory
+    function setLastSubdirectory(subdir) {
+        GM_setValue('stacksLastSubdirectory', subdir);
+    }
+
+    // Update all dropdowns on the page to match the selected value
+    function syncAllDropdowns(selectedValue) {
+        document.querySelectorAll('.stacks-subfolder-select').forEach(dropdown => {
+            if (dropdown.value !== selectedValue) {
+                dropdown.value = selectedValue;
+            }
+        });
+        setLastSubdirectory(selectedValue);
+    }
 
     function reloadConfig() {
         CONFIG.serverUrl = GM_getValue('stacksServerUrl', DEFAULT_SERVER_URL);
@@ -707,21 +731,29 @@
 
             try {
                 const result = await apiRequest({
-                    method: 'GET',
-                    path: '/api/status',
+                    method: 'POST',
+                    path: '/api/key/test',
                     baseUrl: testUrl,
                     apiKey: testApiKey,
                     timeout: 7788,
+                    body: { key: testApiKey }
                 });
 
-                if (result.status === 401 || result.status === 403) {
-                    statusDiv.innerHTML = `❌ <strong>Invalid API key</strong><br>Check your API key in Stacks → Settings`;
-                    statusDiv.style.color = '#ff5555';
-                } else if (result.status === 200 && result.data) {
-                    const { queue_size, recent_history } = result.data;
-                    const historyCount = Array.isArray(recent_history) ? recent_history.length : 0;
-                    statusDiv.innerHTML = `✅ <strong>Connected!</strong><br>Queue: ${queue_size}, History: ${historyCount} items`;
-                    statusDiv.style.color = '#50fa7b';
+                if (result.status === 200 && result.data) {
+                    const { valid, type } = result.data;
+
+                    if (valid) {
+                        let keyTypeLabel = type === 'admin' ? 'Admin Key (full access)' : 'Downloader Key (limited access)';
+                        let keyTypeColor = type === 'admin' ? '#bd93f9' : '#8be9fd';
+                        statusDiv.innerHTML = `✅ <strong>Connected!</strong><br><span style="color: ${keyTypeColor};">${keyTypeLabel}</span>`;
+                        statusDiv.style.color = '#50fa7b';
+
+                        // Fetch subdirectories after successful connection
+                        await fetchSubdirectories();
+                    } else {
+                        statusDiv.innerHTML = `❌ <strong>Invalid API key</strong><br>Check your API key in Stacks → Settings`;
+                        statusDiv.style.color = '#ff5555';
+                    }
                 } else {
                     statusDiv.innerHTML = `❌ <strong>Error ${result.status}</strong><br>${result.statusText || 'Unknown error'}`;
                     statusDiv.style.color = '#ff5555';
@@ -780,10 +812,37 @@
     }
 
     // ============================================================
+    // API: Fetch subdirectories
+    // ============================================================
+
+    async function fetchSubdirectories() {
+        if (!CONFIG.apiKey) {
+            SUBDIRECTORIES = [];
+            return;
+        }
+
+        try {
+            const result = await apiRequest({
+                method: 'GET',
+                path: '/api/subdirs',
+            });
+
+            if (result.status === 200 && result.data && result.data.success) {
+                SUBDIRECTORIES = result.data.subdirectories || [];
+            } else {
+                SUBDIRECTORIES = [];
+            }
+        } catch (err) {
+            console.warn('Failed to fetch subdirectories:', err);
+            SUBDIRECTORIES = [];
+        }
+    }
+
+    // ============================================================
     // API: Add to queue
     // ============================================================
 
-    async function addToQueue(md5, source = 'browser') {
+    async function addToQueue(md5, source = 'browser', subfolder = null) {
         if (!CONFIG.apiKey) {
             throw new Error(
                 '⚠️ API key not configured.\n\n' +
@@ -794,10 +853,15 @@
             );
         }
 
+        const body = { md5, source };
+        if (subfolder) {
+            body.subfolder = subfolder;
+        }
+
         const result = await apiRequest({
             method: 'POST',
             path: '/api/queue/add',
-            body: { md5, source },
+            body: body,
         });
 
         if (result.status === 401 || result.status === 403) {
@@ -816,11 +880,53 @@
     // ============================================================
 
     function createDownloadButton(md5) {
+        const container = document.createElement('div');
+        container.className = 'stacks-btn-container';
+        container.style.cssText = 'display: inline-flex; gap: 4px; align-items: center;';
+
         const btn = document.createElement('a');
         btn.href = '#';
         btn.className = 'custom-a text-[#2563eb] inline-block outline-offset-[-2px] outline-2 rounded-[3px] focus:outline font-semibold text-sm leading-none hover:opacity-80 relative stacks-btn';
         btn.innerHTML = '<span class="text-[15px] align-text-bottom inline-block icon-[typcn--download] mr-[1px]"></span>Download';
         btn.title = 'Add to Stacks queue';
+
+        // Add button first
+        container.appendChild(btn);
+
+        // Create dropdown if subdirectories exist (after button)
+        let dropdown = null;
+        if (SUBDIRECTORIES && SUBDIRECTORIES.length > 0) {
+            dropdown = document.createElement('select');
+            dropdown.className = 'stacks-subfolder-select';
+            dropdown.style.cssText = 'padding: 4px 8px; border: 1px solid #2563eb; border-radius: 3px; font-size: 12px; background: white; color: #2563eb; cursor: pointer;';
+            dropdown.title = 'Select destination folder';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '[base folder]';
+            dropdown.appendChild(defaultOption);
+
+            SUBDIRECTORIES.forEach(subdir => {
+                const option = document.createElement('option');
+                option.value = subdir;
+                // Show full path without leading slash
+                option.textContent = subdir.replace(/^\/+/, '');
+                dropdown.appendChild(option);
+            });
+
+            // Set to last used subdirectory
+            const lastSubdir = getLastSubdirectory();
+            if (lastSubdir) {
+                dropdown.value = lastSubdir;
+            }
+
+            // Sync all dropdowns when this one changes
+            dropdown.addEventListener('change', (e) => {
+                syncAllDropdowns(e.target.value);
+            });
+
+            container.appendChild(dropdown);
+        }
 
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -830,8 +936,10 @@
             btn.innerHTML = '<span class="text-[15px] align-text-bottom inline-block icon-[svg-spinners--ring-resize] mr-[1px]"></span>Adding...';
             btn.style.pointerEvents = 'none';
 
+            const selectedSubfolder = dropdown && dropdown.value ? dropdown.value : null;
+
             try {
-                const result = await addToQueue(md5, 'search-page');
+                const result = await addToQueue(md5, 'search-page', selectedSubfolder);
 
                 if (result && result.success) {
                     showToast({
@@ -865,7 +973,7 @@
             }
         });
 
-        return btn;
+        return container;
     }
 
     function findSaveButton(root = document) {
@@ -934,7 +1042,7 @@
     // INIT
     // ============================================================
 
-    function init() {
+    async function init() {
         const currentPath = window.location.pathname;
 
         console.log('%c📚 Stacks Extension Loaded', 'font-size: 14px; font-weight: bold; color: #50fa7b;');
@@ -966,6 +1074,17 @@
         if (!CONFIG.apiKey) {
             return;
         }
+
+        // Fetch subdirectories on load (wait for it to complete)
+        await fetchSubdirectories();
+
+        // Refresh subdirectories every 60 seconds
+        if (subdirectoriesRefreshInterval) {
+            clearInterval(subdirectoriesRefreshInterval);
+        }
+        subdirectoriesRefreshInterval = setInterval(() => {
+            fetchSubdirectories();
+        }, 60000);
 
         if (currentPath.startsWith('/search')) {
             addButtonsToSearchResults();

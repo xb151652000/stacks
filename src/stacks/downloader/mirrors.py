@@ -1,10 +1,13 @@
-def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_attempts=3):
+def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_attempts=3, subfolder=None):
     """
     Download from any mirror with stale cookie handling.
 
     Logic:
     - slow_download: Use pre-warmed cookies with direct HTTP requests
     - external_mirror: Try direct, use FlareSolverr on 403 (with cookie refresh)
+
+    Args:
+        subfolder: Subfolder path to save file to (optional)
     """
     try:
         if mirror_type == 'slow_download':
@@ -50,7 +53,7 @@ def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_att
                         d.status_callback("Downloading file...")
 
                     d.logger.info("Found download URL via FlareSolverr, downloading...")
-                    return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5)
+                    return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5, subfolder=subfolder)
 
                 response.raise_for_status()
 
@@ -66,7 +69,7 @@ def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_att
                     d.status_callback("Downloading file...")
 
                 d.logger.info("Found download URL, downloading...")
-                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5)
+                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5, subfolder=subfolder)
 
             except Exception as e:
                 d.logger.error(f"Error accessing slow_download page: {e}")
@@ -109,7 +112,7 @@ def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_att
                                 if hasattr(d, 'status_callback'):
                                     d.status_callback("Downloading file...")
 
-                                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5)
+                                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5, subfolder=subfolder)
 
                         # If cookie refresh failed or still got 403, use FlareSolverr
                         if hasattr(d, 'status_callback'):
@@ -124,7 +127,7 @@ def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_att
                                 if hasattr(d, 'status_callback'):
                                     d.status_callback("Downloading file...")
                                 d.logger.info("Found download URL via FlareSolverr, downloading...")
-                                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5)
+                                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5, subfolder=subfolder)
                         return None
                     else:
                         d.logger.warning("Got 403 but FlareSolverr not configured")
@@ -143,8 +146,8 @@ def download_from_mirror(d, mirror_url, mirror_type, md5, title=None, resume_att
                 if hasattr(d, 'status_callback'):
                     d.status_callback("Downloading file...")
 
-                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5)
-            
+                return d.download_direct(download_link, title=title, resume_attempts=resume_attempts, md5=md5, subfolder=subfolder)
+
             except Exception as e:
                 d.logger.error(f"Error accessing external mirror: {e}")
                 return None

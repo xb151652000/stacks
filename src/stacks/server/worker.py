@@ -153,7 +153,8 @@ class DownloadWorker:
                     'title': item.get('title', 'Unknown'),
                     'source': item.get('source'),
                     'added_at': item.get('added_at'),
-                    'status': 'queued'
+                    'status': 'queued',
+                    'subfolder': item.get('subfolder')
                 })
                 self.queue.current_download = None
                 self.queue.save()
@@ -271,7 +272,7 @@ class DownloadWorker:
                     self.queue.requeue_current()
                     continue
 
-                self.queue.mark_complete(item['md5'], False, error=f"Failed to fetch download info: {e}")
+                self.queue.mark_complete(item['md5'], False, error=f"Failed to fetch download info: {e}", subfolder=item.get('subfolder'))
                 continue
 
             # Update current download with fetched information
@@ -312,7 +313,8 @@ class DownloadWorker:
                     item['md5'],
                     resume_attempts=resume_attempts,
                     filename=filename,
-                    links=links
+                    links=links,
+                    subfolder=item.get('subfolder')
                 )
 
                 # Once download completes (success or failure), it's too late to cancel
@@ -327,9 +329,9 @@ class DownloadWorker:
                     continue
 
                 if success:
-                    self.queue.mark_complete(item['md5'], True, filepath=filepath, used_fast_download=used_fast_download, filename=filename)
+                    self.queue.mark_complete(item['md5'], True, filepath=filepath, used_fast_download=used_fast_download, filename=filename, subfolder=item.get('subfolder'))
                 else:
-                    self.queue.mark_complete(item['md5'], False, error="Download failed", filename=filename)
+                    self.queue.mark_complete(item['md5'], False, error="Download failed", filename=filename, subfolder=item.get('subfolder'))
 
             except Exception as e:
                 self.logger.error(f"Download error: {item['md5']} - {e}")
@@ -354,7 +356,7 @@ class DownloadWorker:
                     self.queue.requeue_current()
                     continue
 
-                self.queue.mark_complete(item['md5'], False, error=str(e), filename=filename)
+                self.queue.mark_complete(item['md5'], False, error=str(e), filename=filename, subfolder=item.get('subfolder'))
             
             # Rate limiting
             if self.queue.queue:

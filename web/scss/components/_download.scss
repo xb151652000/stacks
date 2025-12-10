@@ -2,6 +2,8 @@
 // DOWNLOAD COMPONENTS
 // ============================================================================
 
+@use '../base' as *;
+
 // Add download section
 .add-item {
   .card.input-row {
@@ -29,6 +31,14 @@
 }
 
 // Current download section
+#current-download {
+  display: none;
+
+  &.visible {
+    display: block;
+  }
+}
+
 .current-download {
   @include card-base;
   color: $foreground;
@@ -36,8 +46,21 @@
   margin-bottom: $spacing-lg;
   border-color: $pink;
 
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+  }
+
   h2 {
     color: $pink;
+    margin: 0;
   }
 
   .title {

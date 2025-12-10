@@ -12,13 +12,14 @@ from stacks.utils.logutils import setup_logging
 from stacks.utils.migrationutils import migrate_incomplete_folder
 from stacks.security.auth import (
     require_auth,
+    require_auth_with_permissions,
     hash_password,
 )
 
 logger = logging.getLogger("api")
 
 @api_bp.route('/api/config/test_flaresolverr', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_config_test_flaresolverr():
     """Test FlareSolverr connection"""
     data = request.json
@@ -70,7 +71,7 @@ def api_config_test_flaresolverr():
         }), 500
     
 @api_bp.route('/api/config/test_key', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_config_test_key():
     """Test fast download key and update cached info"""
     data = request.json
@@ -145,7 +146,7 @@ def api_config_test_key():
         }), 500
     
 @api_bp.route('/api/config', methods=['POST'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_config_update():
     """
     Update configuration using schema validation.
@@ -259,7 +260,7 @@ def api_config_update():
 
     
 @api_bp.route('/api/config', methods=['GET'])
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_config_get():
     """Get current configuration"""
     import copy
@@ -271,3 +272,19 @@ def api_config_get():
     if 'login' in config_data and 'password' in config_data['login']:
         config_data['login']['password'] = '***MASKED***'
     return jsonify(config_data)
+
+@api_bp.route('/api/subdirs', methods=['GET'])
+@require_auth_with_permissions(allow_downloader=True)
+def api_subdirs_get():
+    """Get list of available subdirectories"""
+    config = current_app.stacks_config
+    subdirs = config.get('downloads', 'subdirectories', default=None)
+
+    # Return empty list if None or not a list
+    if not subdirs or not isinstance(subdirs, list):
+        subdirs = []
+
+    return jsonify({
+        'success': True,
+        'subdirectories': subdirs
+    })

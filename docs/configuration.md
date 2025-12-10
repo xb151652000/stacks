@@ -67,3 +67,32 @@ http://192.168.1.100:7788
 ```
 
 Make sure to update the Tampermonkey script settings on each device to point to your server's IP.
+
+### User access rights
+
+By default, Stacks runs as  `root` inside the container. This is normal fo rmany Docker images, but means that any files created or mounted volumes will also belong to `root` on the host. 
+
+If your other pass can't access the downloaded files, or you prefer stricter permission control, you can tell Docker to run Stacks as a different user.
+
+**Set a specific user in Docker Compose**
+```yaml
+ services:
+   stacks:
+     # Use previous config and add:
+     user: 1000:1000 # Replace with the UID:GID you want Stacks to use
+```
+**Set a specific user in Docker CLI**
+```bash
+docker run -d \
+  --user 1000:1000 \
+  ...
+  zelest/stacks:latest
+``` 
+
+If Stacks already have created files as `root`, you may need to update ownership nefore switching users:
+```bash
+sudo chown -R 1000:1000 /path/to/config
+sudo chown -R 1000:1000 /path/to/download
+sudo chown -R 1000:1000 /path/to/logs
+```
+Replace the UID/GID and paths to match your setup.

@@ -2,6 +2,8 @@
 // GLOBAL LAYOUT & RESET
 // ============================================================================
 
+@use '../base' as *;
+
 * {
   box-sizing: border-box;
   margin: 0;

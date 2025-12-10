@@ -35,14 +35,14 @@
             <div class="stat-value error" id="stat-failed">0</div>
             <div class="stat-label">Failed</div>
           </div>
-          <div class="stat-card" id="stat-fast-card" style="display: none">
-            <div class="stat-value" style="color: var(--cyan)" id="stat-fast">0/0</div>
+          <div class="stat-card hidden" id="stat-fast-card">
+            <div class="stat-value cyan" id="stat-fast">0/0</div>
             <div class="stat-label">Fast Downloads</div>
           </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 15px">
+        <div class="tabs__actions">
           <a href="https://github.com/zelestcarlyone/stacks-docker"><div id="version" class="version">Version 1.0.0</div></a>
-          <a href="/logout" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85em">Logout</a>
+          <a href="/logout" class="btn btn-secondary btn--logout">Logout</a>
         </div>
       </nav>
 
@@ -55,16 +55,17 @@
         </div>
 
         <!-- Current Download -->
-        <div id="current-download" style="display: none">
+        <div id="current-download">
           <div class="current-download">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h2 style="margin: 0;">Currently Downloading</h2>
-              <div style="display: flex; gap: 10px;">
+            <div class="current-download__header">
+              <h2>Currently Downloading</h2>
+              <div class="current-download__actions">
                 <button class="btn btn-primary" data-icon="pause-circle-line" id="current-cancel-btn" onclick="cancelCurrent()" title="Pause download"></button>
                 <button class="btn btn-danger" data-icon="file-close-line" id="current-remove-btn" onclick="removeCurrent()" title="Cancel and remove"></button>
               </div>
             </div>
             <div class="title" id="current-title">Loading...</div>
+            <span class="item-subfolder" id="current-subfolder"></span>
             <div class="md5" id="current-md5"></div>
             <div class="status-message" id="current-status"></div>
             <div class="progress-container">
@@ -83,7 +84,7 @@
           <section class="card">
             <div class="card-header">
               <h2>Queue <span class="badge" id="queue-count">0</span></h2>
-              <div style="display: flex; gap: 10px;">
+              <div class="card-header__actions">
                 <button class="btn" data-icon="pause-circle-line" id="pause-btn" onclick="togglePause()"></button>
                 <button class="btn btn-danger" data-icon="delete-bin-line" onclick="clearQueue()"></button>
               </div>
@@ -100,7 +101,7 @@
           <section class="card">
             <div class="card-header">
               <h2>Recent History <span class="badge" id="history-count">0</span></h2>
-              <button class="btn btn-danger" data-icon="delete-bin-line"  onclick="clearHistory()"></button>
+              <button class="btn btn-danger" data-icon="delete-bin-line" onclick="clearHistory()"></button>
             </div>
             <div id="history-list" class="list">
               <div class="empty-state">
@@ -152,15 +153,29 @@
                   <input type="password" id="setting-new-password" placeholder="Enter new password" maxlength="256" />
                 </div>
                 <div class="settings-section">
-                  <h3>API Key</h3>
+                  <h3>Downloader API Key</h3>
                   <div class="settings-group">
-                    <label>Your API Key (required for external tools)</label>
-                    <div style="display: flex; gap: 10px; align-items: center">
-                      <input type="text" id="display-api-key" readonly value="Loading..." />
-                      <button class="btn btn-secondary" data-clipboard-action="copy" data-clipboard-target="#display-api-key">Copy</button>
-                      <button class="btn btn-danger" onclick="regenerateApiKey()">Generate New</button>
+                    <label>Your Downloader API Key (default, auto-generated)</label>
+                    <div class="settings-group__actions">
+                      <input type="text" id="display-downloader-key" readonly value="Loading..." />
+                      <button class="btn btn-secondary" data-clipboard-action="copy" data-icon="clipboard-line" data-clipboard-target="#display-downloader-key"></button>
+                      <button class="btn btn-success" onclick="regenerateApiKey('downloader')">Generate New</button>
+                      <button class="btn btn-danger" onclick="disableApiKey('downloader')">Disable</button>
                     </div>
-                    <div class="comment">Use this key in Tampermonkey and other external tools to authenticate.</div>
+                    <div class="comment">Default API key for Tampermonkey and external tools. Can add items to queue and list subdirectories. Auto-generated on setup. Safe to share with others.</div>
+                  </div>
+                </div>
+                <div class="settings-section">
+                  <h3>Admin API Key (Optional)</h3>
+                  <div class="settings-group">
+                    <label>Admin API Key (full access, optional)</label>
+                    <div class="settings-group__actions">
+                      <input type="text" id="display-api-key" readonly value="Loading..." />
+                      <button class="btn btn-secondary" data-clipboard-action="copy" data-icon="clipboard-line" data-clipboard-target="#display-api-key"></button>
+                      <button class="btn btn-success" onclick="regenerateApiKey('admin')">Generate New</button>
+                      <button class="btn btn-danger" onclick="disableApiKey('admin')">Disable</button>
+                    </div>
+                    <div class="comment">Optional key for full access to all API endpoints including admin functions. Only generate if you need unrestricted API access. Keep it private!</div>
                   </div>
                 </div>
               </div>
@@ -186,6 +201,11 @@
                   <label for="setting-incomplete-folder-path">Incomplete folder path</label>
                   <input type="text" id="setting-incomplete-folder-path" placeholder="/download/incomplete" maxlength="128" />
                   <div class="comment">Path where partial downloads are stored. Remember to add a volume mount if you change this from the default one.</div>
+                </div>
+                <div class="settings-group">
+                  <h3>Subdirectories</h3>
+                  <div id="setting-subdirectories"></div>
+                  <div class="comment">Subdirectories available for downloads. These will appear as options in the Tampermonkey extension dropdown.</div>
                 </div>
                 <div class="settings-group">
                   <h3>File naming</h3>
@@ -222,7 +242,7 @@
                   <label for="setting-fast-key">Secret Key</label>
                   <input type="password" id="setting-fast-key" placeholder="Your Anna's Archive secret key" />
 
-                  <button class="btn btn-secondary" style="margin-top: 10px" onclick="testFastKey()">Test Key</button>
+                  <button class="btn btn-secondary btn--spaced" onclick="testFastKey()">Test Key</button>
                   <div id="key-test-result" class="test-result"></div>
                 </div>
               </div>
@@ -250,7 +270,7 @@
                   <input type="number" id="setting-flaresolverr-timeout" min="10" max="300" value="60" />
                   <div class="comment">Maximum time to wait for FlareSolverr to solve challenges (10-300 seconds)</div>
 
-                  <button class="btn btn-secondary" style="margin-top: 10px" onclick="testFlaresolverr()">Test Connection</button>
+                  <button class="btn btn-secondary btn--spaced" onclick="testFlaresolverr()">Test Connection</button>
                   <div id="flaresolverr-test-result" class="test-result"></div>
                 </div>
               </div>
@@ -300,7 +320,10 @@
     <template id="queue-item-template">
       <div class="list-item">
         <div class="item-info">
-          <div class="item-title"></div>
+          <div class="item-title">
+            <span class="item-title-text"></span>
+            <span class="item-subfolder"></span>
+          </div>
           <div class="item-md5"></div>
           <div class="item-time"></div>
         </div>
@@ -329,12 +352,13 @@
             <span class="item-status-icon"></span>
             <span class="item-title-text"></span>
             <span class="item-method-icon"></span>
+            <span class="item-subfolder"></span>
           </div>
           <a class="item-link" href="" target="_blank"><span class="item-md5"></span><span data-icon="external-link"></span></a>
           <div class="item-time"></div>
-          <div class="item-error" style="display: none"></div>
+          <div class="item-error"></div>
         </div>
-        <button class="btn btn-secondary retry-btn" data-icon="file-add-line" onclick="" style="display: none"></button>
+        <button class="btn btn-secondary retry-btn" data-icon="file-add-line" onclick=""></button>
       </div>
     </template>
 
@@ -361,11 +385,31 @@
       </div>
     </template>
 
+    <!-- Tag Input Templates -->
+    <template id="tag-input-template">
+      <div class="tag-input-wrapper">
+        <div class="tag-list"></div>
+        <div class="tag-input-row">
+          <input type="text" class="tag-input-field" placeholder="" />
+          <button type="button" class="tag-add-btn btn btn-success" data-icon="folder-add-line"></button>
+        </div>
+      </div>
+      <div class="tag-count"></div>
+    </template>
+
+    <template id="tag-item-template">
+      <div class="tag-item">
+        <span class="tag-text" data-icon="folder"></span>
+        <button type="button" class="tag-remove" data-icon="close-line"></button>
+      </div>
+    </template>
+
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
     <script src="{{ url_for('static', filename='script/clipboard.min.js', v=TIMESTAMP) }}"></script>
     <script src="{{ url_for('static', filename='script/toasts.js', v=TIMESTAMP) }}"></script>
+    <script src="{{ url_for('static', filename='script/tag-input.js', v=TIMESTAMP) }}"></script>
     <script src="{{ url_for('static', filename='script/app.js', v=TIMESTAMP) }}"></script>
   </body>
 </html>

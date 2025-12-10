@@ -1,9 +1,12 @@
 # ========================================
 # Stage 1: Builder
 # ========================================
-FROM python:3.11-slim AS builder
+FROM python:3.11-alpine AS builder
 
 WORKDIR /opt/stacks
+
+# Install build dependencies for packages with C extensions (like bcrypt)
+RUN apk add --no-cache gcc musl-dev libffi-dev
 
 # Install PEX
 RUN pip install --no-cache-dir pex
@@ -30,9 +33,9 @@ RUN pex \
 RUN rm -rf deps src web/scss requirements.txt
 
 # ========================================
-# Stage 2: Distroless Python3
+# Stage 2: Runtime
 # ========================================
-FROM gcr.io/distroless/python3
+FROM python:3.14.2-alpine3.23
 
 ARG VERSION=unknown
 ARG FINGERPRINT=unknown
@@ -53,6 +56,6 @@ COPY --from=builder /opt/stacks/ /opt/stacks/
 EXPOSE 7788
 
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-    CMD ["/usr/bin/python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7788/api/health')"]
+    CMD ["python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7788/api/health')"]
 
-ENTRYPOINT ["/usr/bin/python3", "/opt/stacks/stacks.pex"]
+ENTRYPOINT ["python3", "/opt/stacks/stacks.pex"]

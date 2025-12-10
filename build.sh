@@ -10,6 +10,7 @@ RED="\033[38;2;255;85;85m"          # red
 RESET="\033[0m"                     # reset
 
 SERVICE="stacks"
+FLARESOLVERR="flaresolverr"
 FORCE=false
 COMPOSE="docker compose"
 NO_CACHE=false
@@ -37,6 +38,18 @@ echo -e "${PURPLE}----------------------------------------${RESET}"
 
 if [ "$FORCE" = true ]; then
     echo -e "${ORANGE}[${RED}!${ORANGE}] FORCE MODE ENABLED - fingerprint checks disabled!${RESET}"
+fi
+
+# -- Check if flaresolverr container is running and stop it
+if docker ps --format '{{.Names}}' | grep -qx "$FLARESOLVERR"; then
+    echo -e "${PURPLE}▸ Stopping flaresolverr container...${RESET}"
+    docker stop "$FLARESOLVERR" > /dev/null || true
+fi
+
+# -- Check if flaresolverr container exists and remove it
+if docker ps -a --format '{{.Names}}' | grep -qx "$FLARESOLVERR"; then
+    echo -e "${PURPLE}▸ Removing flaresolverr container...${RESET}"
+    docker rm "$FLARESOLVERR" > /dev/null || true
 fi
 
 # -- Check if container is running and stops it

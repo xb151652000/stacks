@@ -2,6 +2,8 @@
 // CARDS & CONTAINERS
 // ============================================================================
 
+@use '../base' as *;
+
 .card-holder {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -26,6 +28,11 @@
   padding: $spacing-sm;
   border-bottom: $border-medium solid $comment;
   @include flex-between;
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+  }
 }
 
 // Statistics cards
@@ -55,6 +62,10 @@
     padding: $spacing-xs;
     width: 120px;
   }
+
+  &.hidden {
+    display: none;
+  }
 }
 
 .stat-value {
@@ -64,6 +75,10 @@
 
   &.error {
     color: $red;
+  }
+
+  &.cyan {
+    color: $cyan;
   }
 }
 

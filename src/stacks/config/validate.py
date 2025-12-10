@@ -6,7 +6,7 @@ from stacks.constants import (
     DEFAULT_PASSWORD,
     LOG_LEVELS,
     INCLUDE_HASH_OPTIONS,
-    RE_32_BIT_KEY,
+    RE_SECRET_KEY,
     RE_IPV4,
     RE_IPV6,
     RE_URL,
@@ -15,7 +15,7 @@ from stacks.constants import (
 )
 
 from stacks.security.auth import (
-    generate_api_key,
+    generate_secret_key,
     hash_password,
     is_valid_bcrypt_hash,
 )
@@ -24,9 +24,14 @@ logger = logging.getLogger('config')
 
 # Reserved paths that cannot be used for incomplete folder
 
-def _validate_path(value):
+def _validate_path(value, path_type="incomplete_folder", incomplete_folder_path=None):
     """
-    Validate and normalize a path for incomplete folder.
+    Validate and normalize a path.
+
+    Args:
+        value: The path string to validate
+        path_type: Either "incomplete_folder" or "subdirectory"
+        incomplete_folder_path: The incomplete folder path to check against (for subdirectories)
     """
     if not isinstance(value, str):
         raise ValueError("Path must be a string")
@@ -56,12 +61,17 @@ def _validate_path(value):
     # Reconstruct as /path/to/folder (no trailing slash)
     normalized_path = '/' + '/'.join(parts)
 
-    # Check against reserved paths
-    for reserved in RESERVED_PATHS:
-        if normalized_path == reserved:
-            raise ValueError(f"Path cannot be {reserved} (reserved)")
-        if normalized_path.startswith(reserved + '/'):
-            raise ValueError(f"Path cannot be a subdirectory of {reserved} (reserved)")
+    # Check against reserved paths based on path type
+    if path_type == "incomplete_folder":
+        for reserved in RESERVED_PATHS:
+            if normalized_path == reserved:
+                raise ValueError(f"Path cannot be {reserved} (reserved)")
+            if normalized_path.startswith(reserved + '/'):
+                raise ValueError(f"Path cannot be a subdirectory of {reserved} (reserved)")
+    elif path_type == "subdirectory":
+        # Check if this conflicts with the incomplete folder
+        if incomplete_folder_path and normalized_path == incomplete_folder_path:
+            raise ValueError(f"Path cannot be the same as incomplete folder: {incomplete_folder_path}")
 
     # Validate the final path would be writable (check parent exists or can be created)
     try:
@@ -78,15 +88,15 @@ def _validate_path(value):
 def _validate(config: dict, schema: dict) -> dict:
     logger.debug("Validating config.")
     normalized = {}
-    
+
     for section, section_schema in schema.items():
         user_section = config.get(section, {})
         if isinstance(section_schema, dict):
             normalized[section] = {}
 
             for key, rules in section_schema.items():
-                value = user_section.get(key, None)               
-                normalized[section][key] = _validate_value(value, rules, key)
+                value = user_section.get(key, None)
+                normalized[section][key] = _validate_value(value, rules, key, section, normalized)
         else:
             logging.debug(f"Error '{key}', no such key in schema.")
     logger.debug("Config validated.")
@@ -94,9 +104,9 @@ def _validate(config: dict, schema: dict) -> dict:
 
 def _apply_default(default, key, old_value):
     match default:
-        case "GENERATE_32_BIT_KEY":
+        case "GENERATE_SECRET_KEY":
             logger.info(f"Generated new 32-bit key for {key}")
-            return generate_api_key()
+            return generate_secret_key()
         case "HASH_PASSWORD":
             logger.warning("Valid password missing, resetting to default.")
             default = os.environ.get('PASSWORD', DEFAULT_PASSWORD)
@@ -109,7 +119,7 @@ def _apply_default(default, key, old_value):
             logger.warning(f"FlareSolverr URL is invalid Resetting back to '{default}'.")
     return default
 
-def _validate_value(value, rules, key):
+def _validate_value(value, rules, key, section=None, normalized=None):
     allowed_types = rules.get("types", [])
     default = rules.get("default")
     min_value = rules.get("min")
@@ -135,9 +145,9 @@ def _validate_value(value, rules, key):
             case "PORT_RANGE":
                 if isinstance(value, int) and 0 <= value <= 65535:
                     return value
-            case "32_BIT_KEY":
+            case "SECRET_KEY":
                 if isinstance(value, str):
-                    if RE_32_BIT_KEY.fullmatch(value):
+                    if RE_SECRET_KEY.fullmatch(value):
                         return value
             case "IP":
                 if isinstance(value, str):
@@ -161,9 +171,32 @@ def _validate_value(value, rules, key):
             case "PATH":
                 if isinstance(value, str):
                     try:
-                        return _validate_path(value)
+                        return _validate_path(value, path_type="incomplete_folder")
                     except ValueError as e:
                         logger.error(f"Path validation failed for {key}: {e}")
+            case "PATH_LIST":
+                if isinstance(value, list):
+                    # Get the incomplete folder path from the normalized config
+                    incomplete_folder_path = None
+                    if normalized and section in normalized:
+                        incomplete_folder_path = normalized[section].get("incomplete_folder_path")
+
+                    validated_subdirs = []
+                    for subdir in value:
+                        if not isinstance(subdir, str):
+                            logger.warning(f"Skipping non-string subdirectory: {subdir}")
+                            continue
+
+                        try:
+                            validated_path = _validate_path(subdir, path_type="subdirectory", incomplete_folder_path=incomplete_folder_path)
+                            validated_subdirs.append(validated_path)
+                        except ValueError as e:
+                            logger.warning(f"Skipping invalid subdirectory '{subdir}': {e}")
+                            continue
+
+                    return validated_subdirs
+                elif value is None:
+                    return None
 
     return _apply_default(default, key, value)
 

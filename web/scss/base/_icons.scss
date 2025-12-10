@@ -2,6 +2,9 @@
 // ICONS
 // ============================================================================
 
+@use 'variables' as *;
+@use 'mixins' as *;
+
 //mixin for icons that use svgs:
 @mixin icon-svg($name) {
   background: currentColor;
@@ -32,6 +35,9 @@
   &[data-icon="speed-up"]:before { content: "\f370"; }
   &[data-icon="speed-up-line"]:before { content: "\f371"; }
 
+  &[data-icon="clipboard"]:before { content: "\eb90"; }
+  &[data-icon="clipboard-line"]:before { content: "\eb91"; }
+
   &[data-icon="close"]:before { content: "\eb98"; }
   &[data-icon="close-line"]:before { content: "\eb99"; }
   &[data-icon="check"]:before { content: "\eb7a"; }
@@ -60,6 +66,10 @@
   &[data-icon="file-add-line"]:before { content: "\ecc9"; }
   &[data-icon="file-close"]:before { content: "\f3b6"; }
   &[data-icon="file-close-line"]:before { content: "\f3b7"; }
+  &[data-icon="folder-add"]:before { content: "\ed59"; }
+  &[data-icon="folder-add-line"]:before { content: "\ed5a"; }
+  &[data-icon="folder"]:before { content: "\ed61"; }
+  &[data-icon="folder-line"]:before { content: "\ed6a"; }
   &[data-icon="delete-bin"]:before { content: "\ec29"; }
   &[data-icon="delete-bin-line"]:before { content: "\ec2a"; }
 

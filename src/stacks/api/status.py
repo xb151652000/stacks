@@ -3,7 +3,7 @@ from flask import jsonify, current_app
 from stacks.utils.logutils import LOG_BUFFER
 
 from . import api_bp
-from stacks.security.auth import require_auth
+from stacks.security.auth import require_auth_with_permissions
 
 logger = logging.getLogger("api")
 
@@ -25,13 +25,13 @@ def api_version():
 
 
 @api_bp.get("/api/logs")
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def get_logfile():
     """Return recent console logs"""
     return jsonify({"lines": list(LOG_BUFFER)})
 
 @api_bp.get("/api/status")
-@require_auth
+@require_auth_with_permissions(allow_downloader=False)
 def api_status():
     """Get current status"""
 

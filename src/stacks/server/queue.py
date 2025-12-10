@@ -43,7 +43,7 @@ class DownloadQueue:
         except Exception as e:
             self.logger.error(f"Failed to save queue: {e}")
     
-    def add(self, md5, source=None):
+    def add(self, md5, source=None, subfolder=None):
         """Add item to queue"""
         with self.lock:
             # Check if in queue
@@ -62,12 +62,13 @@ class DownloadQueue:
                 'md5': md5,
                 'source': source,
                 'added_at': datetime.now().isoformat(),
-                'status': 'queued'
+                'status': 'queued',
+                'subfolder': subfolder
             }
 
             self.queue.append(item)
             self.save()
-            self.logger.info(f"Added to queue: {md5}")
+            self.logger.info(f"Added to queue: {md5}{f' (subfolder: {subfolder})' if subfolder else ''}")
             return True, "Added to queue"
     
     def get_next(self):
@@ -77,7 +78,7 @@ class DownloadQueue:
                 return self.queue.pop(0)
             return None
     
-    def mark_complete(self, md5, success, filepath=None, error=None, used_fast_download=False, filename=None):
+    def mark_complete(self, md5, success, filepath=None, error=None, used_fast_download=False, filename=None, subfolder=None):
         """Mark download as complete"""
         with self.lock:
             # Use provided filename, or extract from filepath if available
@@ -91,7 +92,8 @@ class DownloadQueue:
                 'success': success,
                 'filepath': str(filepath) if filepath else None,
                 'error': error,
-                'used_fast_download': used_fast_download
+                'used_fast_download': used_fast_download,
+                'subfolder': subfolder
             }
             self.history.append(item)
             self.current_download = None
@@ -99,7 +101,8 @@ class DownloadQueue:
 
             if success:
                 method = "fast download" if used_fast_download else "mirror"
-                self.logger.info(f"Download complete ({method}): {filename or md5}")
+                subfolder_info = f" to {subfolder}" if subfolder else ""
+                self.logger.info(f"Download complete ({method}): {filename or md5}{subfolder_info}")
             else:
                 self.logger.warning(f"Download failed: {filename or md5} - {error}")
     
@@ -184,7 +187,8 @@ class DownloadQueue:
                 'md5': md5,
                 'source': self.current_download.get('source', 'paused'),
                 'added_at': datetime.now().isoformat(),
-                'status': 'queued'
+                'status': 'queued',
+                'subfolder': self.current_download.get('subfolder')
             }
 
             # Add to front of queue

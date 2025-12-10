@@ -2,65 +2,112 @@
 
 ## Authentication
 
-All API endpoints (except `/api/health` and `/api/version`) require authentication via:
+Stacks supports three authentication methods with different permission levels:
 
-- **Web UI**: Session cookie (automatic after login)
-- **External tools**: `X-API-Key` header or `api_key` query parameter
+### Authentication Methods
 
-**Get your API key:** Log in to web UI → Settings tab → API Key section
+1. **Session** - Web UI session cookie (automatic after login) - Full admin access
+2. **Admin API Key** - Full access to all API endpoints
+3. **Downloader API Key** - Limited access (can only add to queue and list subdirectories)
+
+### Getting API Keys
+
+- **Admin Key**: Log in to web UI → Settings → Authentication → API Key (Admin)
+- **Downloader Key**: Log in to web UI → Settings → Authentication → Downloader API Key (Limited)
+
+### Key Types Explained
+
+| Key Type           | Permissions                                   | Use Case                                   |
+| ------------------ | --------------------------------------------- | ------------------------------------------ |
+| **Admin Key**      | Full access to all endpoints                  | Personal use, full control                 |
+| **Downloader Key** | Can only add to queue and list subdirectories | Safe to share with others for Tampermonkey |
 
 ## API Endpoints
 
 ### System
 
-| Endpoint       | Method | Auth Required      | Description                                        |
-| -------------- | ------ | ------------------ | -------------------------------------------------- |
-| `/api/health`  | GET    | No                 | Health check - returns `{"status": "ok"}`          |
-| `/api/logs`    | GET    | Session or API key | Get the last 1000 lines of the system log          |
-| `/api/version` | GET    | No                 | Get current Stacks and Tampermonkey script version |
+| Endpoint       | Method | Session | Admin Key | DL Key | Description                                               |
+| -------------- | ------ | ------- | --------- | ------ | --------------------------------------------------------- |
+| `/api/health`  | GET    | ✔️       | ✔️         | ✔️      | Health check - returns `{"status": "ok"}`                 |
+| `/api/version` | GET    | ✔️       | ✔️         | ✔️      | Get current Stacks and Tampermonkey script version        |
+| `/api/logs`    | GET    | ✔️       | ✔️         | ❌      | Get the last 1000 lines of the system log                 |
+| `/api/status`  | GET    | ✔️       | ✔️         | ❌      | Get current queue, downloads, history, fast download info |
 
 ### Authentication & Keys
 
-| Endpoint              | Method | Auth Required | Description                                |
-| --------------------- | ------ | ------------- | ------------------------------------------ |
-| `/api/key`            | GET    | Session only  | Get API key (web UI only)                  |
-| `/api/key/regenerate` | POST   | Session only  | Generate new API key (invalidates old one) |
+| Endpoint                         | Method | Session | Admin Key | DL Key | Description                                           |
+| -------------------------------- | ------ | ------- | --------- | ------ | ----------------------------------------------------- |
+| `/api/key`                       | GET    | ✔️       | ❌         | ❌      | Get API keys (web UI only)                            |
+| `/api/key/downloader/disable`    | POST   | ✔️       | ❌         | ❌      | Disable API key (sets to null)                        |
+| `/api/key/regenerate`            | POST   | ✔️       | ❌         | ❌      | Generate new admin API key (invalidates old one)      |
+| `/api/key/downloader/regenerate` | POST   | ✔️       | ❌         | ❌      | Generate new downloader API key (invalidates old one) |
+| `/api/key/downloader/disable`    | POST   | ✔️       | ❌         | ❌      | Disable downloader API key (sets to null)             |
+| `/api/key/test`                  | POST   | ✔️       | ✔️         | ✔️      | Test if an API key is valid and return its type       |
 
 ### Queue Management
 
-| Endpoint            | Method | Auth Required      | Description                                              |
-| ------------------- | ------ | ------------------ | -------------------------------------------------------- |
-| `/api/status`       | GET    | Session or API key | Get current queue, downloads, history, and fast download |
-| `/api/queue/add`    | POST   | Session or API key | Add item to download queue                               |
-| `/api/queue/remove` | POST   | Session or API key | Remove item from queue by MD5                            |
-| `/api/queue/clear`  | POST   | Session or API key | Clear entire queue                                       |
+| Endpoint                    | Method | Session | Admin Key | DL Key | Description                                   |
+| --------------------------- | ------ | ------- | --------- | ------ | --------------------------------------------- |
+| `/api/queue/add`            | POST   | ✔️       | ✔️         | ✔️      | Add item to download queue                    |
+| `/api/queue/remove`         | POST   | ✔️       | ✔️         | ❌      | Remove item from queue by MD5                 |
+| `/api/queue/clear`          | POST   | ✔️       | ✔️         | ❌      | Clear entire queue                            |
+| `/api/queue/pause`          | POST   | ✔️       | ✔️         | ❌      | Pause/resume the download worker              |
+| `/api/queue/current/cancel` | POST   | ✔️       | ✔️         | ❌      | Cancel current download and requeue it        |
+| `/api/queue/current/remove` | POST   | ✔️       | ✔️         | ❌      | Cancel current download and remove from queue |
+| `/api/subdirs`              | GET    | ✔️       | ✔️         | ✔️      | Get list of available subdirectories          |
 
 ### History Management
 
-| Endpoint             | Method | Auth Required      | Description             |
-| -------------------- | ------ | ------------------ | ----------------------- |
-| `/api/history/clear` | POST   | Session or API key | Clear download history  |
-| `/api/history/retry` | POST   | Session or API key | Retry a failed download |
+| Endpoint             | Method | Session | Admin Key | DL Key | Description             |
+| -------------------- | ------ | ------- | --------- | ------ | ----------------------- |
+| `/api/history/clear` | POST   | ✔️       | ✔️         | ❌      | Clear download history  |
+| `/api/history/retry` | POST   | ✔️       | ✔️         | ❌      | Retry a failed download |
 
 ### Configuration
 
-| Endpoint               | Method | Auth Required      | Description                        |
-| ---------------------- | ------ | ------------------ | ---------------------------------- |
-| `/api/config`          | GET    | Session or API key | Get current configuration          |
-| `/api/config`          | POST   | Session or API key | Update configuration (live reload) |
-| `/api/config/test_key` | POST   | Session or API key | Test fast download key validity    |
+| Endpoint                        | Method | Session | Admin Key | DL Key | Description                                    |
+| ------------------------------- | ------ | ------- | --------- | ------ | ---------------------------------------------- |
+| `/api/config`                   | GET    | ✔️       | ✔️         | ❌      | Get current configuration                      |
+| `/api/config`                   | POST   | ✔️       | ✔️         | ❌      | Update configuration (live reload)             |
+| `/api/config/test_key`          | POST   | ✔️       | ✔️         | ❌      | Test Anna's Archive fast download key validity |
+| `/api/config/test_flaresolverr` | POST   | ✔️       | ✔️         | ❌      | Test FlareSolverr connection                   |
 
 ## Example Usage
 
-### With API Key (for scripts/external tools):
+### Test an API Key
+
+```bash
+curl -X POST http://localhost:7788/api/key/test \
+  -H "Content-Type: application/json" \
+  -d '{"key": "YOUR_API_KEY_HERE"}'
+```
+
+Response:
+
+```json
+{
+  "valid": true,
+  "type": "admin"
+}
+```
+
+or for downloader keys:
+
+```json
+{
+  "valid": true,
+  "type": "downloader"
+}
+```
+
+### Add Item to Queue (works with both Admin and Downloader keys)
 
 ```bash
 curl -X POST http://localhost:7788/api/queue/add \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_32_CHARACTER_API_KEY" \
+  -H "X-API-Key: YOUR_API_KEY_HERE" \
   -d '{
     "md5": "1d6fd221af5b9c9bffbd398041013de8",
-    "title": "Example Book Title",
     "source": "manual"
   }'
 ```
@@ -71,6 +118,22 @@ Response:
 {
   "success": true,
   "message": "Added to queue",
-  "md5": "abc123..."
+  "md5": "1d6fd221af5b9c9bffbd398041013de8"
+}
+```
+
+### Get Subdirectories (works with both Admin and Downloader keys)
+
+```bash
+curl -X GET http://localhost:7788/api/subdirs \
+  -H "X-API-Key: YOUR_API_KEY_HERE"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "subdirectories": ["/Library 1", "/Library 2", "/Users/Alice"]
 }
 ```

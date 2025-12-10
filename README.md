@@ -171,8 +171,36 @@ If you prefer running Stacks without Docker Compose, you can use the Docker CLI 
   ```bash
   -e RESET_ADMIN=true
   ```
+### User access rights
 
-### First-Time Setup
+By default, Stacks runs as  `root` inside the container. This is normal fo rmany Docker images, but means that any files created or mounted volumes will also belong to `root` on the host. 
+
+If your other pass can't access the downloaded files, or you prefer stricter permission control, you can tell Docker to run Stacks as a different user.
+
+**Set a specific user in Docker Compose**
+```yaml
+ services:
+   stacks:
+     # Use previous config and add:
+     user: 1000:1000 # Replace with the UID:GID you want Stacks to use
+```
+**Set a specific user in Docker CLI**
+```bash
+docker run -d \
+  --user 1000:1000 \
+  ...
+  zelest/stacks:latest
+``` 
+
+If Stacks already have created files as `root`, you may need to update ownership nefore switching users:
+```bash
+sudo chown -R 1000:1000 /path/to/config
+sudo chown -R 1000:1000 /path/to/download
+sudo chown -R 1000:1000 /path/to/logs
+```
+Replace the UID/GID and paths to match your setup.
+
+## First-Time Setup
 
 1. Navigate to the web interface at `http://localhost:7788`
 2. Log in with default credentials (or custom if set via environment variables)

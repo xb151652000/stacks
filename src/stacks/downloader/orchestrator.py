@@ -7,7 +7,7 @@ def _is_cancelled(d):
         return should_continue is False
     return False
 
-def orchestrate_download(d, input_string, prefer_mirror=None, resume_attempts=3, filename=None, links=None):
+def orchestrate_download(d, input_string, prefer_mirror=None, resume_attempts=3, filename=None, links=None, subfolder=None):
     """Download a file from Anna's Archive.
 
     Args:
@@ -17,6 +17,7 @@ def orchestrate_download(d, input_string, prefer_mirror=None, resume_attempts=3,
         resume_attempts: Number of resume attempts
         filename: Pre-fetched filename (optional, will fetch if not provided)
         links: Pre-fetched download links (optional, will fetch if not provided)
+        subfolder: Subfolder path to save file to (optional)
 
     Returns: (success, used_fast_download, filepath)
     """
@@ -43,7 +44,7 @@ def orchestrate_download(d, input_string, prefer_mirror=None, resume_attempts=3,
             if hasattr(d, 'status_callback'):
                 d.status_callback("Downloading via fast download...")
 
-            filepath = d.download_direct(result, title=filename, resume_attempts=resume_attempts, md5=md5)
+            filepath = d.download_direct(result, title=filename, resume_attempts=resume_attempts, md5=md5, subfolder=subfolder)
             if filepath:
                 d.logger.info("Fast download successful")
                 return True, True, filepath
@@ -95,7 +96,8 @@ def orchestrate_download(d, input_string, prefer_mirror=None, resume_attempts=3,
             mirror_link['type'],
             md5,
             title=filename,
-            resume_attempts=resume_attempts
+            resume_attempts=resume_attempts,
+            subfolder=subfolder
         )
 
         if filepath:

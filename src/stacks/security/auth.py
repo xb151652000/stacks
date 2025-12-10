@@ -13,9 +13,9 @@ logger = logging.getLogger("auth")
 login_attempts: dict[str, list[datetime]] = {}
 login_lockouts: dict[str, datetime] = {}
 
-def generate_api_key():
-    """Generate a secure 32-character alphanumeric API key"""
-    alphabet = string.ascii_letters + string.digits
+def generate_secret_key():
+    """Generate 192bit secret key"""
+    alphabet = string.ascii_letters + string.digits + "-_"
     return ''.join(secrets.choice(alphabet) for _ in range(32))
 
 def hash_password(password):
@@ -111,12 +111,36 @@ def require_login(f):
         return f(*args, **kwargs)
     return wrapper
 
+def validate_api_key(provided_key):
+    """
+    Validate an API key and return its type.
+    Returns: (is_valid: bool, key_type: str | None)
+    - "admin": Full access admin key
+    - "downloader": Limited downloader key
+    - None: Invalid key
+    """
+    if not provided_key:
+        return False, None
+
+    cfg = current_app.stacks_config
+    admin_key = cfg.get("api", "key")
+    downloader_key = cfg.get("api", "downloader_key", default=None)
+
+    if provided_key == admin_key:
+        return True, "admin"
+    elif downloader_key and provided_key == downloader_key:
+        return True, "downloader"
+    else:
+        return False, None
+
 def require_auth(f):
     """
     Require EITHER:
     - A logged-in session (web UI), OR
     - A valid X-API-Key / ?api_key=... token (external tools).
     - The authentication to be disabled in the config
+
+    Accepts both admin and downloader keys.
     """
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -135,9 +159,11 @@ def require_auth(f):
             request.headers.get("X-API-Key")
             or request.args.get("api_key")
         )
-        valid_key = cfg.get("api", "key")
 
-        if provided_key and valid_key and provided_key == valid_key:
+        is_valid, key_type = validate_api_key(provided_key)
+        if is_valid:
+            # Store key type in request context for permission checking
+            request.key_type = key_type
             return f(*args, **kwargs)
 
         return (
@@ -145,6 +171,71 @@ def require_auth(f):
             401,
         )
     return wrapper
+
+def require_auth_with_permissions(allow_downloader=False):
+    """
+    Decorator that checks authentication and permissions.
+
+    Args:
+        allow_downloader: If True, downloader keys are allowed. If False, only admin keys/sessions.
+
+    Usage:
+        @require_auth_with_permissions(allow_downloader=True)
+        def endpoint_that_downloader_can_access():
+            ...
+
+        @require_auth_with_permissions(allow_downloader=False)
+        def admin_only_endpoint():
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            # Allow for disabled auth altogether
+            cfg = current_app.stacks_config
+            disable_auth = cfg.get("login", "disable")
+
+            if disable_auth:
+                return f(*args, **kwargs)
+
+            # Web session takes precedence (always has admin rights)
+            if session.get("logged_in"):
+                return f(*args, **kwargs)
+
+            # API key path
+            provided_key = (
+                request.headers.get("X-API-Key")
+                or request.args.get("api_key")
+            )
+
+            is_valid, key_type = validate_api_key(provided_key)
+
+            if not is_valid:
+                return (
+                    jsonify({"success": False, "error": "Authentication required"}),
+                    401,
+                )
+
+            # Check permissions
+            if key_type == "admin":
+                # Admin always has access
+                return f(*args, **kwargs)
+            elif key_type == "downloader":
+                if allow_downloader:
+                    return f(*args, **kwargs)
+                else:
+                    return (
+                        jsonify({"success": False, "error": "Insufficient permissions. Admin access required."}),
+                        403,
+                    )
+
+            # Shouldn't reach here, but just in case
+            return (
+                jsonify({"success": False, "error": "Authentication required"}),
+                401,
+            )
+        return wrapper
+    return decorator
 
 def require_session_only(f):
     """Require *only* a logged-in session (UI-only endpoints)."""

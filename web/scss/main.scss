@@ -3,25 +3,22 @@
 // Stacks Download Manager - Dracula Theme
 // ============================================================================
 
-// Base imports - Variables and mixins must come first
-@import 'base/variables';
-@import 'base/mixins';
-
-// Base styles
-@import 'base/fonts';
-@import 'base/icons';
+// Base styles (variables and mixins are loaded via @use in individual files)
+@use 'base/fonts';
+@use 'base/icons';
 
 // Layout
-@import 'layout/foundation';
+@use 'layout/foundation';
 
 // Components - Order doesn't matter since they're modular
-@import 'components/buttons';
-@import 'components/cards';
-@import 'components/console';
-@import 'components/download';
-@import 'components/footer';
-@import 'components/lists';
-@import 'components/login';
-@import 'components/navigator';
-@import 'components/settings';
-@import 'components/toast';
+@use 'components/buttons';
+@use 'components/cards';
+@use 'components/console';
+@use 'components/download';
+@use 'components/footer';
+@use 'components/lists';
+@use 'components/login';
+@use 'components/navigator';
+@use 'components/settings';
+@use 'components/tag-input';
+@use 'components/toast';
