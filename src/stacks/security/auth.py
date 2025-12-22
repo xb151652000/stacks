@@ -1,3 +1,13 @@
+"""
+Stacks安全认证模块
+此模块提供用户认证、授权和安全防护功能，包括：
+- 密码哈希和验证
+- 登录速率限制
+- 会话管理
+- API密钥验证
+- 权限控制装饰器
+"""
+
 import logging
 import secrets
 import string
@@ -9,87 +19,150 @@ from flask import session, request, jsonify, redirect, url_for, current_app
 
 logger = logging.getLogger("auth")
 
-# In-memory tracking of attempts and lockouts
-login_attempts: dict[str, list[datetime]] = {}
-login_lockouts: dict[str, datetime] = {}
+# ================================
+# 内存中的登录尝试和锁定跟踪
+# ================================
+# 注意：这些数据存储在内存中，服务器重启后会丢失
+# 对于生产环境，可以考虑使用Redis等外部存储
+login_attempts: dict[str, list[datetime]] = {}  # IP地址 -> 登录尝试时间列表
+login_lockouts: dict[str, datetime] = {}        # IP地址 -> 锁定到期时间
 
 def generate_secret_key():
-    """Generate 192bit secret key"""
+    """
+    生成192位（32字符）的密钥
+    使用加密安全的随机数生成器创建密钥，用于API密钥和会话密钥。
+    
+    Returns:
+        str: 32字符的随机密钥，包含字母、数字、下划线和连字符
+    """
     alphabet = string.ascii_letters + string.digits + "-_"
     return ''.join(secrets.choice(alphabet) for _ in range(32))
 
 def hash_password(password):
-    """Hash a password using bcrypt"""
+    """
+    使用bcrypt哈希密码
+    bcrypt是一种自适应哈希函数，专门用于密码哈希，包含盐值以防止彩虹表攻击。
+    
+    Args:
+        password (str): 明文密码
+        
+    Returns:
+        str: bcrypt哈希值（60字符）
+    """
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(password, hashed):
-    """Verify a password against a bcrypt hash"""
+    """
+    验证密码是否匹配bcrypt哈希
+    安全地比较明文密码和存储的哈希值。
+    
+    Args:
+        password (str): 要验证的明文密码
+        hashed (str): 存储的bcrypt哈希值
+        
+    Returns:
+        bool: 密码是否匹配
+    """
     try:
         return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
     except Exception:
+        # 如果哈希格式无效或其他错误，返回False而不是抛出异常
         return False
 
 def is_valid_bcrypt_hash(hash_string):
-    """Check if a string looks like a valid bcrypt hash"""
+    """
+    检查字符串是否看起来像有效的bcrypt哈希
+    通过检查前缀和长度来快速验证哈希格式。
+    
+    Args:
+        hash_string (str): 要检查的字符串
+        
+    Returns:
+        bool: 是否是有效的bcrypt哈希格式
+    """
     if not hash_string:
         return False
-    # Bcrypt hashes start with $2a$, $2b$, or $2y$ and are 60 characters
+    # bcrypt哈希以$2a$、$2b$或$2y$开头，长度为60字符
     return (hash_string.startswith(('$2a$', '$2b$', '$2y$')) and len(hash_string) == 60)
 
 def check_rate_limit(ip):
-    """Check if IP is rate limited. Returns (allowed, message)"""
-    # Check if locked out
+    """
+    检查IP是否被速率限制
+    实现登录尝试速率限制，防止暴力破解攻击。
+    清理过期的尝试记录和锁定，然后检查当前IP的状态。
+    
+    Args:
+        ip (str): 客户端IP地址
+        
+    Returns:
+        tuple: (是否允许, 消息) - 如果不允许，消息包含原因
+    """
+    # 检查是否被锁定
     if ip in login_lockouts:
         lockout_until = login_lockouts[ip]
         if datetime.now() < lockout_until:
+            # 仍在锁定期内
             remaining = int((lockout_until - datetime.now()).total_seconds() / 60)
-            return False, f"Too many failed attempts. Try again in {remaining} minutes."
+            return False, f"尝试次数过多。请在{remaining}分钟后重试。"
         else:
-            # Lockout expired
+            # 锁定已过期，清理记录
             del login_lockouts[ip]
             if ip in login_attempts:
                 del login_attempts[ip]
     
-    # Check attempts
+    # 初始化当前IP的尝试记录
     if ip not in login_attempts:
         login_attempts[ip] = []
     
-    # Clean old attempts for ALL IPs (older than 10 minutes)
+    # 清理所有IP的过期尝试记录（超过10分钟的）
     cutoff = datetime.now() - timedelta(minutes=10)
     expired_ips = []
     for tracked_ip, attempts in login_attempts.items():
         login_attempts[tracked_ip] = [t for t in attempts if t > cutoff]
-        if not login_attempts[tracked_ip]:  # No recent attempts
+        if not login_attempts[tracked_ip]:  # 没有最近的尝试
             expired_ips.append(tracked_ip)
 
-    # Remove IPs with no recent attempts
+    # 移除没有最近尝试的IP
     for tracked_ip in expired_ips:
         del login_attempts[tracked_ip]
 
-    # Also clean expired lockouts
+    # 清理过期的锁定记录
     expired_lockouts = [tracked_ip for tracked_ip, until in login_lockouts.items() if datetime.now() >= until]
     for tracked_ip in expired_lockouts:
         del login_lockouts[tracked_ip]
 
-    # Re-initialize current IP if it was cleaned
+    # 如果当前IP被清理了，重新初始化
     if ip not in login_attempts:
         login_attempts[ip] = []
     
+    # 检查尝试次数是否超过限制
     if len(login_attempts[ip]) >= 5:
-        # Lock out for 10 minutes
+        # 锁定10分钟
         login_lockouts[ip] = datetime.now() + timedelta(minutes=10)
-        return False, "Too many failed attempts. Try again in 10 minutes."
+        return False, "尝试次数过多。请在10分钟后重试。"
     
     return True, None
 
 def record_failed_attempt(ip):
-    """Record a failed login attempt"""
+    """
+    记录失败的登录尝试
+    在速率限制系统中记录一次失败的登录尝试。
+    
+    Args:
+        ip (str): 客户端IP地址
+    """
     if ip not in login_attempts:
         login_attempts[ip] = []
     login_attempts[ip].append(datetime.now())
 
 def clear_attempts(ip):
-    """Clear login attempts for IP after successful login"""
+    """
+    成功登录后清除IP的登录尝试记录
+    重置该IP的安全状态，允许正常的后续登录。
+    
+    Args:
+        ip (str): 客户端IP地址
+    """
     if ip in login_attempts:
         del login_attempts[ip]
     if ip in login_lockouts:
