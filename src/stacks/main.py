@@ -211,7 +211,7 @@ def main():
         port = app.stacks_port
 
         # 启动Flask开发服务器
-        app.run(host, port, debug=debug_mode, use_reloader=False)
+        app.run(host, port, debug=debug_mode, use_reloader=True)
     else:
         # 生产模式：使用Gunicorn WSGI服务器
         print(f"{INFO}◼ 正在使用Gunicorn启动Stacks...{RESET}")
