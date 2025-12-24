@@ -61,7 +61,7 @@ def _validate_path(value, path_type="incomplete_folder", incomplete_folder_path=
         if part == '..':
             if parts:
                 parts.pop()
-        elif part != '.' and part != '/':
+        elif part != '.' and part != '/' and part != '\\':
             parts.append(part)
 
     if not parts:
