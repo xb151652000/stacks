@@ -387,7 +387,9 @@ def main():
 
         # 启动Flask开发服务器
         # 就像说："开始试营业，欢迎客人！"
-        app.run(host, port, debug=debug_mode, threaded=True)
+        # 注意：use_reloader=False 是为了让VS Code调试器能够正确attach到进程
+        # 如果启用reloader，Flask会启动两个进程，导致断点不生效
+        app.run(host, port, debug=debug_mode, threaded=True, use_reloader=False)
     else:
         # 🏢 生产模式：使用Gunicorn WSGI服务器
         # 就像正式营业：稳定高效，适合实际使用
